@@ -1,1 +1,700 @@
-hello
+import { useState, useEffect, useCallback, useRef } from "react";
+
+const USERS = [
+  { id:"owner", name:"Owner",    role:"owner", pin:"0000", avatar:"👑" },
+  { id:"w1",    name:"Worker 1", role:"tech",  pin:"1111", avatar:"🔧" },
+  { id:"w2",    name:"Worker 2", role:"tech",  pin:"2222", avatar:"🔧" },
+  { id:"w3",    name:"Worker 3", role:"tech",  pin:"3333", avatar:"🔧" },
+];
+const IPHONE_MODELS = [
+  "iPhone 6","iPhone 6S","iPhone 7","iPhone 7 Plus","iPhone 8","iPhone 8 Plus",
+  "iPhone X","iPhone XS","iPhone XS Max","iPhone XR",
+  "iPhone 11","iPhone 11 Pro","iPhone 11 Pro Max",
+  "iPhone 12","iPhone 12 Mini","iPhone 12 Pro","iPhone 12 Pro Max",
+  "iPhone 13","iPhone 13 Mini","iPhone 13 Pro","iPhone 13 Pro Max",
+  "iPhone 14","iPhone 14 Plus","iPhone 14 Pro","iPhone 14 Pro Max",
+  "iPhone 15","iPhone 15 Plus","iPhone 15 Pro","iPhone 15 Pro Max",
+  "iPhone 16","iPhone 16 Plus","iPhone 16 Pro","iPhone 16 Pro Max","Kale",
+];
+const REPAIR_TYPES = [
+  "Shaashadda (Screen)","Batariyada","Camera","Charging Port","Badhanka Home",
+  "Badhanka Dhinaca","Speaker","Microphone","Face ID","Back Glass",
+  "Motherboard","Biyo galay","Checking kaliya","Kale",
+];
+const ITEM_CATS = ["📱 iPhone Celis","🎧 Earphones","⚡ Charger","🛡️ Screen Protector","📦 Case","🔋 Battery","🔩 Spare Part","🔁 Kale"];
+const LOGO = "/mnt/user-data/uploads/E3E70C8C-C68D-41E6-9E8B-95C97F84E537.png";
+
+const gid   = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const today = () => new Date().toLocaleDateString("en-GB");
+const fmt   = n => "$"+Number(n||0).toLocaleString();
+const num   = n => Number(n||0);
+const sumA  = (arr,fn) => arr.reduce((s,x)=>s+num(fn(x)),0);
+
+// ── Shared Storage Helpers ────────────────────────────────────────────────────
+const STORE_KEYS = ["repairs","inventory","iphones","sales","custDebts","suppliers"];
+
+async function sharedGet(key) {
+  try {
+    const r = await window.storage.get(key, true);
+    return r ? JSON.parse(r.value) : [];
+  } catch { return []; }
+}
+async function sharedSet(key, val) {
+  try { await window.storage.set(key, JSON.stringify(val), true); } catch {}
+}
+
+// Poll interval for real-time sync (every 3 seconds)
+const POLL_MS = 3000;
+
+// ══════════════════════════════════════════════════════════════════════════════
+export default function App() {
+  const [user,      setUser]      = useState(null);
+  const [tab,       setTab]       = useState("dash");
+  const [modal,     setModal]     = useState(null);
+  const [toast,     setToast]     = useState(null);
+  const [detail,    setDetail]    = useState(null);
+  const [search,    setSearch]    = useState("");
+  const [stockView, setStockView] = useState("items");
+  const [loading,   setLoading]   = useState(true);
+  const [syncing,   setSyncing]   = useState(false);
+
+  const [repairs,   setRepairs]   = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [iphones,   setIphones]   = useState([]);
+  const [sales,     setSales]     = useState([]);
+  const [custDebts, setCustDebts] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+
+  const dataRef = useRef({repairs:[],inventory:[],iphones:[],sales:[],custDebts:[],suppliers:[]});
+
+  // ── Load all shared data ───────────────────────────────────────────────────
+  const loadAll = useCallback(async (showSync=false) => {
+    if(showSync) setSyncing(true);
+    try {
+      const [r,i,ip,s,cd,sp] = await Promise.all(STORE_KEYS.map(k=>sharedGet(k)));
+      setRepairs(r);   dataRef.current.repairs   = r;
+      setInventory(i); dataRef.current.inventory = i;
+      setIphones(ip);  dataRef.current.iphones   = ip;
+      setSales(s);     dataRef.current.sales     = s;
+      setCustDebts(cd);dataRef.current.custDebts = cd;
+      setSuppliers(sp);dataRef.current.suppliers = sp;
+    } finally {
+      setLoading(false);
+      if(showSync) setTimeout(()=>setSyncing(false),600);
+    }
+  }, []);
+
+  // Initial load + polling for real-time sync
+  useEffect(() => {
+    loadAll();
+    const interval = setInterval(()=>loadAll(false), POLL_MS);
+    return ()=>clearInterval(interval);
+  }, [loadAll]);
+
+  const save = async (key, val) => {
+    await sharedSet(key, val);
+    await loadAll(true);
+  };
+
+  const showToast=(msg,err=false)=>{setToast({msg,err});setTimeout(()=>setToast(null),2800);};
+  const closeModal=()=>setModal(null);
+
+  // ── Blank forms ───────────────────────────────────────────────────────────
+  const BR  = {customerName:"",phone:"",model:"",repairType:"",customIssue:"",password:"",imei:"",color:"",isChecking:false,price:"",notes:"",status:"Sugaya",payStatus:"La'aanta"};
+  const BI  = {name:"",category:ITEM_CATS[0],costPrice:"",sellPrice:"",qty:"",supplierName:"",notes:""};
+  const BIP = {model:"",storage:"",color:"",imei:"",costPrice:"",sellPrice:"",condition:"Cusub",supplierName:"",notes:""};
+  const BS  = {saleType:"item",itemId:"",iphoneId:"",saleQty:"1",custName:"",custPhone:"",payType:"kaash",deynAmount:""};
+  const BCD = {custName:"",phone:"",item:"",totalAmount:"",paidAmount:"0",notes:""};
+  const BSP = {companyName:"",contactName:"",phone:"",itemDesc:"",qty:"",unitCost:"",buyType:"deyn",notes:""};
+  const BPY = {amount:"",note:""};
+
+  const [rF,  setRF]  = useState(BR);
+  const [iF,  setIF]  = useState(BI);
+  const [ipF, setIpF] = useState(BIP);
+  const [sF,  setSF]  = useState(BS);
+  const [cdF, setCdF] = useState(BCD);
+  const [spF, setSpF] = useState(BSP);
+  const [payF,setPayF]= useState(BPY);
+  const [rpyF,setRpyF]= useState(BPY);
+
+  if(loading) return (
+    <div style={{minHeight:"100vh",background:"#080808",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
+      <img src={LOGO} alt="" style={{width:90,height:90,borderRadius:"50%",border:"3px solid #c9a227",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
+      <div style={{color:"#c9a227",fontSize:20,fontWeight:900}}>Ramadan iPhone</div>
+      <div style={{color:"#78716c",fontSize:13}}>Xogta la soo rarayo...</div>
+      <div style={{display:"flex",gap:8,marginTop:4}}>
+        {[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:"#c9a227",opacity:0.3+i*0.35}}/>)}
+      </div>
+    </div>
+  );
+
+  if(!user) return <Login onLogin={u=>{setUser(u);setTab("dash");}}/>;
+
+  // ── Computed ──────────────────────────────────────────────────────────────
+  const repairRevenue = sumA(repairs.filter(r=>r.status==="Dhammaatay"&&r.payStatus==="Suubiyay"),r=>r.price);
+  const repairOwed    = sumA(repairs.filter(r=>r.status==="Dhammaatay"&&r.payStatus==="La'aanta"),r=>r.price);
+  const saleRevenue   = sumA(sales,s=>s.totalPrice);
+  const saleCost      = sumA(sales,s=>s.totalCost);
+  const saleProfit    = saleRevenue - saleCost;
+  const custDebtTotal = sumA(custDebts,c=>Math.max(0,num(c.totalAmount)-num(c.paidAmount)));
+  const supplierOwed  = sumA(suppliers.filter(s=>s.buyType==="deyn"),s=>Math.max(0,num(s.qty)*num(s.unitCost)-sumA(s.payments||[],p=>p.amount)));
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  const addRepair=async()=>{
+    if(!rF.customerName||!rF.phone||!rF.model||!rF.repairType) return showToast("❗ Buuxi goobaha muhiimka ah",true);
+    const newList=[{...rF,id:gid(),receivedBy:user.name,receivedDate:today(),doneDate:"",givenBy:"",givenDate:"",payments:[]},...repairs];
+    await save("repairs",newList);
+    setRF(BR);closeModal();showToast("✅ Farasmo la diiwaan geliyey!");
+  };
+  const updateRepairStatus=async(id,status)=>{
+    const newList=repairs.map(r=>r.id===id?{...r,status,doneDate:status==="Dhammaatay"?today():r.doneDate}:r);
+    await save("repairs",newList);
+    showToast("✅ Xaaladda la cusboonaysiiyey");
+  };
+  const markRepairPaid=async id=>{
+    await save("repairs",repairs.map(r=>r.id===id?{...r,payStatus:"Suubiyay"}:r));
+    showToast("✅ Lacagta la suubiyay");
+  };
+  const setRepairGiver=async(id,name)=>{
+    await save("repairs",repairs.map(r=>r.id===id?{...r,givenBy:name,givenDate:today()}:r));
+    showToast("✅ La xaqiijiyey");
+  };
+  const addRepairPay=async rid=>{
+    if(!rpyF.amount) return showToast("❗ Geli qadarka",true);
+    const newList=repairs.map(r=>r.id===rid?{...r,payments:[...(r.payments||[]),{id:gid(),amount:num(rpyF.amount),note:rpyF.note,date:today(),by:user.name}]}:r);
+    await save("repairs",newList);
+    setRpyF(BPY);showToast("✅ Dejin la diiwaan geliyey");
+  };
+
+  const addItem=async()=>{
+    if(!iF.name||!iF.costPrice||!iF.sellPrice||!iF.qty) return showToast("❗ Buuxi goobaha muhiimka ah",true);
+    if(num(iF.sellPrice)<=num(iF.costPrice)) return showToast("❗ Qiimaha iibku waa inuu sarreeyo costka",true);
+    await save("inventory",[{...iF,id:gid(),addedBy:user.name,date:today()},...inventory]);
+    setIF(BI);closeModal();showToast("✅ Badeeco la diiwaan geliyey!");
+  };
+  const addIphone=async()=>{
+    if(!ipF.model||!ipF.costPrice||!ipF.sellPrice) return showToast("❗ Buuxi goobaha muhiimka ah",true);
+    await save("iphones",[{...ipF,id:gid(),status:"Jira",addedBy:user.name,date:today()},...iphones]);
+    setIpF(BIP);closeModal();showToast("✅ iPhone stock la diiwaan geliyey!");
+  };
+
+  const addSale=async()=>{
+    const {saleType,itemId,iphoneId,saleQty,custName,custPhone,payType,deynAmount}=sF;
+    if(saleType==="item"){
+      const it=inventory.find(i=>i.id===itemId);
+      if(!it) return showToast("❗ Dooro badeecad",true);
+      const qty=num(saleQty); if(qty<1||qty>num(it.qty)) return showToast("❗ Tiro khaldan",true);
+      const tc=num(it.costPrice)*qty, tp=num(it.sellPrice)*qty;
+      const deyn=payType==="deyn"?num(deynAmount):0, paid=tp-deyn;
+      const newSale={id:gid(),saleType:"item",itemName:it.name,category:it.category,qty,costPerUnit:num(it.costPrice),sellPerUnit:num(it.sellPrice),totalCost:tc,totalPrice:tp,paid,deyn,custName:custName||"Macmiil",custPhone,payType,soldBy:user.name,date:today()};
+      await save("sales",[newSale,...sales]);
+      await save("inventory",inventory.map(i=>i.id===itemId?{...i,qty:num(i.qty)-qty}:i));
+      if(payType==="deyn"&&deyn>0) await save("custDebts",[{id:gid(),custName:custName||"Macmiil",phone:custPhone,item:it.name,totalAmount:tp,paidAmount:paid,notes:"Iibka",date:today(),addedBy:user.name,payments:[]},...custDebts]);
+    } else {
+      const ip=iphones.find(i=>i.id===iphoneId);
+      if(!ip) return showToast("❗ Dooro iPhone",true);
+      const deyn=payType==="deyn"?num(deynAmount):0, paid=num(ip.sellPrice)-deyn;
+      const nm=`${ip.model} ${ip.storage||""} ${ip.color||""}`.trim();
+      const newSale={id:gid(),saleType:"iphone",itemName:nm,category:"📱 iPhone Celis",qty:1,costPerUnit:num(ip.costPrice),sellPerUnit:num(ip.sellPrice),totalCost:num(ip.costPrice),totalPrice:num(ip.sellPrice),paid,deyn,custName:custName||"Macmiil",custPhone,payType,soldBy:user.name,date:today()};
+      await save("sales",[newSale,...sales]);
+      await save("iphones",iphones.map(i=>i.id===iphoneId?{...i,status:"La Gadaa",soldDate:today(),soldBy:user.name,soldTo:custName}:i));
+      if(payType==="deyn"&&deyn>0) await save("custDebts",[{id:gid(),custName:custName||"Macmiil",phone:custPhone,item:nm,totalAmount:num(ip.sellPrice),paidAmount:paid,notes:"iPhone Iib",date:today(),addedBy:user.name,payments:[]},...custDebts]);
+    }
+    setSF(BS);closeModal();showToast("✅ Iibka la diiwaan geliyey!");
+  };
+
+  const addCustDebt=async()=>{
+    if(!cdF.custName||!cdF.item||!cdF.totalAmount) return showToast("❗ Buuxi goobaha muhiimka ah",true);
+    await save("custDebts",[{...cdF,id:gid(),addedBy:user.name,date:today(),payments:[]},...custDebts]);
+    setCdF(BCD);closeModal();showToast("✅ Deynta la diiwaan geliyey!");
+  };
+  const addCustPay=async did=>{
+    if(!payF.amount) return showToast("❗ Geli qadarka",true);
+    const newList=custDebts.map(d=>d.id!==did?d:{...d,paidAmount:num(d.paidAmount)+num(payF.amount),payments:[...(d.payments||[]),{id:gid(),amount:num(payF.amount),note:payF.note,date:today(),by:user.name}]});
+    await save("custDebts",newList);
+    setPayF(BPY);showToast("✅ Lacag bixin la diiwaan geliyey");
+  };
+
+  const addSupplier=async()=>{
+    if(!spF.companyName||!spF.itemDesc||!spF.qty||!spF.unitCost) return showToast("❗ Buuxi goobaha muhiimka ah",true);
+    await save("suppliers",[{...spF,id:gid(),addedBy:user.name,date:today(),payments:[]},...suppliers]);
+    setSpF(BSP);closeModal();showToast("✅ Supplier la diiwaan geliyey!");
+  };
+  const addSupplierPay=async sid=>{
+    if(!payF.amount) return showToast("❗ Geli qadarka",true);
+    const newList=suppliers.map(s=>s.id!==sid?s:{...s,payments:[...(s.payments||[]),{id:gid(),amount:num(payF.amount),note:payF.note,date:today(),by:user.name}]});
+    await save("suppliers",newList);
+    setPayF(BPY);showToast("✅ Lacag bixin la diiwaan geliyey");
+  };
+
+  const dRepair = detail?.type==="repair" ? repairs.find(r=>r.id===detail.id)   : null;
+  const dCust   = detail?.type==="cust"   ? custDebts.find(c=>c.id===detail.id) : null;
+  const dSupp   = detail?.type==="supp"   ? suppliers.find(s=>s.id===detail.id) : null;
+
+  const Q=search.toLowerCase();
+  const filtR=repairs.filter(r=>!Q||r.customerName?.toLowerCase().includes(Q)||r.phone?.includes(Q)||r.model?.toLowerCase().includes(Q));
+
+  const TABS=[
+    {id:"dash",     icon:"📊",label:"Guud"},
+    {id:"repairs",  icon:"🔧",label:"Farasmo"},
+    {id:"stock",    icon:"📦",label:"Stock"},
+    {id:"sales",    icon:"💰",label:"Iib"},
+    {id:"debts",    icon:"🤝",label:"Deyn"},
+    {id:"suppliers",icon:"🏪",label:"Supplier"},
+  ];
+
+  return (
+    <div style={S.app}>
+      <div style={S.topbar}>
+        <img src={LOGO} alt="logo" style={S.logoImg} onError={e=>e.target.style.display="none"}/>
+        <div style={S.shopInfo}>
+          <div style={S.shopName}>Ramadan iPhone</div>
+          <div style={S.shopSub}>Electronic &amp; Repair</div>
+        </div>
+        <div style={S.userChip}>
+          <span style={{fontSize:8,color:syncing?"#fbbf24":"#4ade80"}}>{syncing?"🔄":"🟢"}</span>
+          <span>{user.avatar}</span>
+          <span style={{fontSize:11}}>{user.name}</span>
+          <button style={S.logoutBtn} onClick={()=>setUser(null)}>✕</button>
+        </div>
+      </div>
+
+      <div style={S.body}>
+
+        {tab==="dash"&&<>
+          <div style={S.statsGrid}>
+            <Stat icon="🔧" label="Farasmo Jira"   val={repairs.filter(r=>r.status!=="Dhammaatay").length} color="#f59e0b"/>
+            <Stat icon="💰" label="Dakhli Farasmo" val={fmt(repairRevenue)} color="#10b981" sm/>
+            <Stat icon="⚠️" label="Lama Suubin"    val={fmt(repairOwed)}   color="#ef4444" sm/>
+            <Stat icon="📱" label="iPhone Stock"   val={iphones.filter(i=>i.status==="Jira").length} color="#22d3ee"/>
+            <Stat icon="📈" label="Faa'iido Iibka" val={fmt(saleProfit)}   color="#4ade80" sm/>
+            <Stat icon="🤝" label="Macmiil Deyn"   val={fmt(custDebtTotal)} color="#f472b6" sm/>
+          </div>
+          <div style={S.actGrid}>
+            <Abtn bg="#b45309" fn={()=>setModal("repair")}>🔧 Farasmo</Abtn>
+            <Abtn bg="#065f46" fn={()=>setModal("sale")}>💰 Gadi</Abtn>
+            <Abtn bg="#1d4ed8" fn={()=>setModal("addItem")}>📦 Badeeco</Abtn>
+            <Abtn bg="#6d28d9" fn={()=>setModal("addIphone")}>📱 iPhone</Abtn>
+            <Abtn bg="#be185d" fn={()=>setModal("custDebt")}>🤝 Deyn</Abtn>
+            <Abtn bg="#0e7490" fn={()=>setModal("supplier")}>🏪 Supplier</Abtn>
+          </div>
+          <Sec title="⚠️ Farasmo Aan La Suubin">
+            {repairs.filter(r=>r.status==="Dhammaatay"&&r.payStatus==="La'aanta").slice(0,3).map(r=><RCard key={r.id} r={r} onClick={()=>setDetail({type:"repair",id:r.id})}/>)}
+            {repairs.filter(r=>r.status==="Dhammaatay"&&r.payStatus==="La'aanta").length===0&&<Empty msg="Dhammaanba waa la suubiyay ✓"/>}
+          </Sec>
+          <Sec title="🤝 Macaamiisha Deynta">
+            {custDebts.filter(c=>num(c.totalAmount)>num(c.paidAmount)).slice(0,3).map(c=><DCard key={c.id} d={c} onClick={()=>setDetail({type:"cust",id:c.id})}/>)}
+            {custDebts.filter(c=>num(c.totalAmount)>num(c.paidAmount)).length===0&&<Empty msg="Deyn macmiil ah ma jirto ✓"/>}
+          </Sec>
+          <Sec title="🏪 Supplier Deynta">
+            {suppliers.filter(s=>s.buyType==="deyn"&&Math.max(0,num(s.qty)*num(s.unitCost)-sumA(s.payments||[],p=>p.amount))>0).slice(0,3).map(s=>{
+              const rem=Math.max(0,num(s.qty)*num(s.unitCost)-sumA(s.payments||[],p=>p.amount));
+              return <div key={s.id} style={{...S.card,borderLeft:"3px solid #ef4444",cursor:"pointer"}} onClick={()=>setDetail({type:"supp",id:s.id})}>
+                <div style={S.cardRow}><span style={S.cardTitle}>{s.companyName}</span><span style={{...S.badge,background:"#7f1d1d"}}>Deyn</span></div>
+                <div style={S.cardSub}>{s.itemDesc}</div>
+                <div style={S.cardFooter}><span>Dhiman: <b style={{color:"#ef4444"}}>{fmt(rem)}</b></span><span>📅 {s.date}</span></div>
+              </div>;
+            })}
+            {suppliers.filter(s=>s.buyType==="deyn"&&Math.max(0,num(s.qty)*num(s.unitCost)-sumA(s.payments||[],p=>p.amount))>0).length===0&&<Empty msg="Supplier deyn ma jirto ✓"/>}
+          </Sec>
+        </>}
+
+        {tab==="repairs"&&<>
+          <PHead title="Farasmooyinka" onAdd={()=>setModal("repair")}/>
+          <input style={S.srch} placeholder="🔍 Magac, telefoon, model..." value={search} onChange={e=>setSearch(e.target.value)}/>
+          {filtR.length===0&&<Empty msg="Wax la helin waayo"/>}
+          {filtR.map(r=><RCard key={r.id} r={r} onClick={()=>setDetail({type:"repair",id:r.id})}/>)}
+        </>}
+
+        {tab==="stock"&&<>
+          <div style={{display:"flex",gap:8,marginBottom:12}}>
+            <button style={{...S.pill,...(stockView==="items"?S.pillA:{})}} onClick={()=>setStockView("items")}>📦 Badeecadaha</button>
+            <button style={{...S.pill,...(stockView==="iphone"?S.pillA:{})}} onClick={()=>setStockView("iphone")}>📱 iPhone Celis</button>
+          </div>
+          {stockView==="items"?<>
+            <PHead title="Badeecadaha Stock" onAdd={()=>setModal("addItem")}/>
+            {inventory.length===0&&<Empty msg="Badeeco stock ma jiro"/>}
+            {inventory.map(it=><div key={it.id} style={{...S.card,borderLeft:`3px solid ${num(it.qty)<3?"#ef4444":"#10b981"}`}}>
+              <div style={S.cardRow}><span style={S.cardTitle}>{it.name}</span><span style={{...S.badge,background:num(it.qty)<3?"#7f1d1d":"#064e3b"}}>{it.qty} jira</span></div>
+              <div style={S.cardSub}>{it.category}</div>
+              <div style={S.prRow}>
+                <PBx label="Cost" val={fmt(it.costPrice)} c="#94a3b8"/>
+                <PBx label="Iibka" val={fmt(it.sellPrice)} c="#22d3ee"/>
+                <PBx label="Faa'iido" val={fmt(num(it.sellPrice)-num(it.costPrice))} c="#4ade80"/>
+                <PBx label="Wadarta" val={fmt(num(it.costPrice)*num(it.qty))} c="#f59e0b"/>
+              </div>
+              <div style={S.cardFooter}><span>📅 {it.date}</span>{it.supplierName&&<span>🏪 {it.supplierName}</span>}</div>
+            </div>)}
+            {inventory.length>0&&<div style={{textAlign:"center",color:"#c9a227",fontSize:12,padding:"8px 0",fontWeight:700}}>Wadarta Stock: {fmt(sumA(inventory,i=>num(i.costPrice)*num(i.qty)))}</div>}
+          </>:<>
+            <PHead title="iPhone Celis Stock" onAdd={()=>setModal("addIphone")}/>
+            {iphones.length===0&&<Empty msg="iPhone stock ma jiro"/>}
+            {iphones.map(ip=><div key={ip.id} style={{...S.card,borderLeft:`3px solid ${ip.status==="Jira"?"#22d3ee":"#374151"}`}}>
+              <div style={S.cardRow}><span style={S.cardTitle}>{ip.model} {ip.storage} {ip.color}</span><span style={{...S.badge,background:ip.status==="Jira"?"#0e7490":"#374151"}}>{ip.status}</span></div>
+              {ip.imei&&<div style={S.cardSub}>IMEI: {ip.imei}</div>}
+              <div style={S.prRow}>
+                <PBx label="Cost" val={fmt(ip.costPrice)} c="#94a3b8"/>
+                <PBx label="Iibka" val={fmt(ip.sellPrice)} c="#22d3ee"/>
+                <PBx label="Faa'iido" val={fmt(num(ip.sellPrice)-num(ip.costPrice))} c="#4ade80"/>
+              </div>
+              <div style={S.cardFooter}><span>📅 {ip.date}</span>{ip.soldTo&&<span>👤 {ip.soldTo}</span>}</div>
+            </div>)}
+          </>}
+        </>}
+
+        {tab==="sales"&&<>
+          <PHead title="Diiwaanka Iibka" onAdd={()=>setModal("sale")} lbl="💰 Gadi"/>
+          <div style={S.summBar}>
+            <span>Dakhli: <b style={{color:"#22d3ee"}}>{fmt(saleRevenue)}</b></span>
+            <span>Cost: <b style={{color:"#94a3b8"}}>{fmt(saleCost)}</b></span>
+            <span>Faa'iido: <b style={{color:"#4ade80"}}>{fmt(saleProfit)}</b></span>
+          </div>
+          {sales.length===0&&<Empty msg="Iib ma jiro"/>}
+          {sales.map(s=><div key={s.id} style={{...S.card,borderLeft:"3px solid #10b981"}}>
+            <div style={S.cardRow}><span style={S.cardTitle}>{s.itemName}</span><span style={{...S.badge,background:s.payType==="kaash"?"#065f46":"#92400e"}}>{s.payType==="kaash"?"💵 Kaash":"📋 Deyn"}</span></div>
+            <div style={S.cardSub}>{s.category}{s.qty>1&&` × ${s.qty}`}</div>
+            <div style={S.prRow}>
+              <PBx label="Cost"     val={fmt(s.totalCost)}  c="#94a3b8"/>
+              <PBx label="La Gadaa" val={fmt(s.totalPrice)} c="#22d3ee"/>
+              <PBx label="Faa'iido" val={fmt(s.totalPrice-s.totalCost)} c="#4ade80"/>
+              {s.deyn>0&&<PBx label="Deyn Ah" val={fmt(s.deyn)} c="#f59e0b"/>}
+            </div>
+            <div style={S.cardFooter}><span>👤 {s.custName}</span><span>🧑‍💼 {s.soldBy}</span><span>📅 {s.date}</span></div>
+          </div>)}
+        </>}
+
+        {tab==="debts"&&<>
+          <PHead title="Macaamiisha Deynta" onAdd={()=>setModal("custDebt")} lbl="➕ Deyn"/>
+          <div style={S.summBar}><span>Wadarta Dhiman: <b style={{color:"#ef4444"}}>{fmt(custDebtTotal)}</b></span></div>
+          {custDebts.length===0&&<Empty msg="Deyn macmiil ah ma jiro"/>}
+          {custDebts.map(c=><DCard key={c.id} d={c} onClick={()=>setDetail({type:"cust",id:c.id})}/>)}
+        </>}
+
+        {tab==="suppliers"&&<>
+          <PHead title="Suppliers / Companies" onAdd={()=>setModal("supplier")} lbl="➕ Cusub"/>
+          <div style={S.summBar}><span>Wadarta Deyn Supplier: <b style={{color:"#ef4444"}}>{fmt(supplierOwed)}</b></span></div>
+          {suppliers.length===0&&<Empty msg="Supplier ma jiro"/>}
+          {suppliers.map(s=>{
+            const tc=num(s.qty)*num(s.unitCost), pd=sumA(s.payments||[],p=>p.amount), rm=Math.max(0,tc-pd);
+            return <div key={s.id} style={{...S.card,borderLeft:`3px solid ${s.buyType==="deyn"?(rm>0?"#ef4444":"#10b981"):"#818cf8"}`,cursor:"pointer"}} onClick={()=>setDetail({type:"supp",id:s.id})}>
+              <div style={S.cardRow}><span style={S.cardTitle}>{s.companyName}</span><span style={{...S.badge,background:s.buyType==="deyn"?"#92400e":"#1e3a5f"}}>{s.buyType==="deyn"?"Deyn":"Kaash"}</span></div>
+              <div style={S.cardSub}>👤 {s.contactName}{s.phone&&` · 📞 ${s.phone}`}</div>
+              <div style={S.cardSub}>📦 {s.itemDesc} × {s.qty}</div>
+              <div style={S.prRow}>
+                <PBx label="Wadarta"    val={fmt(tc)} c="#94a3b8"/>
+                <PBx label="La Bixiyay" val={fmt(pd)} c="#4ade80"/>
+                {s.buyType==="deyn"&&<PBx label="Dhiman" val={fmt(rm)} c={rm>0?"#ef4444":"#4ade80"}/>}
+              </div>
+              <div style={S.cardFooter}><span>📅 {s.date}</span><span>👤 {s.addedBy}</span></div>
+            </div>;
+          })}
+        </>}
+      </div>
+
+      <div style={S.nav}>
+        {TABS.map(t=><button key={t.id} style={{...S.navBtn,...(tab===t.id?S.navA:{})}} onClick={()=>{setTab(t.id);setSearch("");}}>
+          <span style={{fontSize:17}}>{t.icon}</span><span style={{fontSize:9}}>{t.label}</span>
+        </button>)}
+      </div>
+
+      {/* MODALS */}
+      {modal==="repair"&&<Modal title="🔧 Farasmo Cusub" onClose={closeModal}>
+        <G2><F l="Magaca Macmiilka *" v={rF.customerName} s={v=>setRF(p=>({...p,customerName:v}))} ph="Faarax Axmed"/>
+            <F l="Telefoon *" v={rF.phone} s={v=>setRF(p=>({...p,phone:v}))} ph="061 xxx xxxx"/></G2>
+        <Sl l="Nooca iPhone *" v={rF.model} s={v=>setRF(p=>({...p,model:v}))} opts={["--Dooro--",...IPHONE_MODELS]}/>
+        <G2><F l="Midab" v={rF.color} s={v=>setRF(p=>({...p,color:v}))} ph="Black"/>
+            <F l="IMEI" v={rF.imei} s={v=>setRF(p=>({...p,imei:v}))} ph="Haddii la yaqaan"/></G2>
+        <Sl l="Dhibaatada *" v={rF.repairType} s={v=>setRF(p=>({...p,repairType:v}))} opts={["--Dooro--",...REPAIR_TYPES]}/>
+        {rF.repairType==="Kale"&&<F l="Sharax" v={rF.customIssue} s={v=>setRF(p=>({...p,customIssue:v}))} ph="Sharax..."/>}
+        <G2><F l="Password" v={rF.password} s={v=>setRF(p=>({...p,password:v}))} ph="Haddii la yaqaan"/>
+            <F l="Qiimaha ($)" v={rF.price} s={v=>setRF(p=>({...p,price:v}))} ph="150" t="number"/></G2>
+        <div style={S.chkRow}><input type="checkbox" id="ck1" checked={rF.isChecking} onChange={e=>setRF(p=>({...p,isChecking:e.target.checked}))}/><label htmlFor="ck1" style={{fontSize:13,color:"#94a3b8"}}>Checking kaliya (Lacag malahan)</label></div>
+        <Sl l="Xaaladda" v={rF.status} s={v=>setRF(p=>({...p,status:v}))} opts={["Sugaya","Socota","Dhammaatay"]}/>
+        <F l="Faallo" v={rF.notes} s={v=>setRF(p=>({...p,notes:v}))} ph="Xog dheeraad ah..."/>
+        <Btn onClick={addRepair}>✅ Diiwaan Geli</Btn>
+      </Modal>}
+
+      {modal==="addItem"&&<Modal title="📦 Badeeco Cusub" onClose={closeModal}>
+        <F l="Magaca Badeecada *" v={iF.name} s={v=>setIF(p=>({...p,name:v}))} ph="AirPods Pro 2"/>
+        <Sl l="Nooca" v={iF.category} s={v=>setIF(p=>({...p,category:v}))} opts={ITEM_CATS}/>
+        <G2><F l="Cost/Qaybood ($) *" v={iF.costPrice} s={v=>setIF(p=>({...p,costPrice:v}))} ph="50" t="number"/>
+            <F l="Qiimaha Iibka ($) *" v={iF.sellPrice} s={v=>setIF(p=>({...p,sellPrice:v}))} ph="85" t="number"/></G2>
+        {iF.costPrice&&iF.sellPrice&&num(iF.sellPrice)>num(iF.costPrice)&&<div style={S.hint}>📈 Faa'iido/qaybood: <b style={{color:"#4ade80"}}>{fmt(iF.sellPrice-iF.costPrice)}</b></div>}
+        <G2><F l="Tirada *" v={iF.qty} s={v=>setIF(p=>({...p,qty:v}))} ph="10" t="number"/>
+            <F l="Supplier" v={iF.supplierName} s={v=>setIF(p=>({...p,supplierName:v}))} ph="Shirkad..."/></G2>
+        <Btn onClick={addItem}>✅ Diiwaan Geli</Btn>
+      </Modal>}
+
+      {modal==="addIphone"&&<Modal title="📱 iPhone Celis Cusub" onClose={closeModal}>
+        <Sl l="Nooca iPhone *" v={ipF.model} s={v=>setIpF(p=>({...p,model:v}))} opts={["--Dooro--",...IPHONE_MODELS]}/>
+        <G2><F l="Storage" v={ipF.storage} s={v=>setIpF(p=>({...p,storage:v}))} ph="256GB"/>
+            <F l="Midab" v={ipF.color} s={v=>setIpF(p=>({...p,color:v}))} ph="Black"/></G2>
+        <G2><F l="Cost ($) *" v={ipF.costPrice} s={v=>setIpF(p=>({...p,costPrice:v}))} ph="400" t="number"/>
+            <F l="Qiimaha Iibka ($) *" v={ipF.sellPrice} s={v=>setIpF(p=>({...p,sellPrice:v}))} ph="500" t="number"/></G2>
+        {ipF.costPrice&&ipF.sellPrice&&num(ipF.sellPrice)>num(ipF.costPrice)&&<div style={S.hint}>📈 Faa'iido: <b style={{color:"#4ade80"}}>{fmt(ipF.sellPrice-ipF.costPrice)}</b></div>}
+        <G2><F l="IMEI" v={ipF.imei} s={v=>setIpF(p=>({...p,imei:v}))} ph="Haddii la yaqaan"/>
+            <Sl l="Xaaladda" v={ipF.condition} s={v=>setIpF(p=>({...p,condition:v}))} opts={["Cusub","Isticmaal (Good)","Isticmaal (Fair)"]}/></G2>
+        <Btn onClick={addIphone}>✅ Diiwaan Geli</Btn>
+      </Modal>}
+
+      {modal==="sale"&&<Modal title="💰 Gadi Badeeco" onClose={closeModal}>
+        <div style={S.segRow}>
+          {[["item","📦 Badeeco"],["iphone","📱 iPhone Celis"]].map(([t,l])=>(
+            <button key={t} style={{...S.segB,...(sF.saleType===t?S.segA:{})}} onClick={()=>setSF(p=>({...p,saleType:t}))}>
+              {l}
+            </button>
+          ))}
+        </div>
+        {sF.saleType==="item"?<>
+          <div><label style={S.lbl}>Dooro Badeecad *</label>
+            <select style={S.inp} value={sF.itemId} onChange={e=>setSF(p=>({...p,itemId:e.target.value}))}>
+              <option value="">-- Dooro --</option>
+              {inventory.filter(i=>num(i.qty)>0).map(i=><option key={i.id} value={i.id}>{i.name} ({i.qty} jira) — {fmt(i.sellPrice)}/qyb</option>)}
+            </select></div>
+          <F l="Tirada *" v={sF.saleQty} s={v=>setSF(p=>({...p,saleQty:v}))} ph="1" t="number"/>
+        </>:<>
+          <div><label style={S.lbl}>Dooro iPhone *</label>
+            <select style={S.inp} value={sF.iphoneId} onChange={e=>setSF(p=>({...p,iphoneId:e.target.value}))}>
+              <option value="">-- Dooro --</option>
+              {iphones.filter(i=>i.status==="Jira").map(i=><option key={i.id} value={i.id}>{i.model} {i.storage} {i.color} — {fmt(i.sellPrice)}</option>)}
+            </select></div>
+        </>}
+        <div style={S.segRow}>
+          {[["kaash","💵 Kaash"],["deyn","📋 Deyn"]].map(([t,l])=>(
+            <button key={t} style={{...S.segB,...(sF.payType===t?S.segA:{})}} onClick={()=>setSF(p=>({...p,payType:t}))}>
+              {l}
+            </button>
+          ))}
+        </div>
+        {sF.payType==="deyn"&&<>
+          <G2><F l="Magaca Macmiilka" v={sF.custName}  s={v=>setSF(p=>({...p,custName:v}))}  ph="Faarax"/>
+              <F l="Telefoon"         v={sF.custPhone} s={v=>setSF(p=>({...p,custPhone:v}))} ph="061..."/></G2>
+          <F l="Qadarka Deynta ($)" v={sF.deynAmount} s={v=>setSF(p=>({...p,deynAmount:v}))} ph="Qadar..." t="number"/>
+        </>}
+        <Btn bg="#065f46" onClick={addSale}>✅ Xaqiiji Iibka</Btn>
+      </Modal>}
+
+      {modal==="custDebt"&&<Modal title="🤝 Deyn Macmiil Cusub" onClose={closeModal}>
+        <G2><F l="Magaca Macmiilka *" v={cdF.custName} s={v=>setCdF(p=>({...p,custName:v}))} ph="Faarax Axmed"/>
+            <F l="Telefoon" v={cdF.phone} s={v=>setCdF(p=>({...p,phone:v}))} ph="061..."/></G2>
+        <F l="Alaabta / Sababta *" v={cdF.item} s={v=>setCdF(p=>({...p,item:v}))} ph="iPhone 14..."/>
+        <G2><F l="Wadarta Deynta ($) *" v={cdF.totalAmount} s={v=>setCdF(p=>({...p,totalAmount:v}))} ph="500" t="number"/>
+            <F l="Hore U Bixiyay ($)" v={cdF.paidAmount} s={v=>setCdF(p=>({...p,paidAmount:v}))} ph="0" t="number"/></G2>
+        <Btn bg="#be185d" onClick={addCustDebt}>✅ Diiwaan Geli</Btn>
+      </Modal>}
+
+      {modal==="supplier"&&<Modal title="🏪 Supplier Cusub" onClose={closeModal}>
+        <G2><F l="Magaca Shirkadda *" v={spF.companyName} s={v=>setSpF(p=>({...p,companyName:v}))} ph="ABC Traders"/>
+            <F l="Xiriiriyaha" v={spF.contactName} s={v=>setSpF(p=>({...p,contactName:v}))} ph="Axmed"/></G2>
+        <F l="Telefoon" v={spF.phone} s={v=>setSpF(p=>({...p,phone:v}))} ph="061..."/>
+        <F l="Alaabta *" v={spF.itemDesc} s={v=>setSpF(p=>({...p,itemDesc:v}))} ph="iPhone 14 Screen..."/>
+        <G2><F l="Tirada *" v={spF.qty} s={v=>setSpF(p=>({...p,qty:v}))} ph="10" t="number"/>
+            <F l="Cost/Qaybood ($) *" v={spF.unitCost} s={v=>setSpF(p=>({...p,unitCost:v}))} ph="50" t="number"/></G2>
+        {spF.qty&&spF.unitCost&&<div style={S.hint}>💰 Wadarta: <b style={{color:"#fbbf24"}}>{fmt(spF.qty*spF.unitCost)}</b></div>}
+        <div style={S.segRow}>
+          {[["kaash","💵 Kaash — La Bixiyay"],["deyn","📋 Deyn — La'aanta"]].map(([t,l])=>(
+            <button key={t} style={{...S.segB,...(spF.buyType===t?S.segA:{})}} onClick={()=>setSpF(p=>({...p,buyType:t}))}>
+              {l}
+            </button>
+          ))}
+        </div>
+        <Btn bg="#0e7490" onClick={addSupplier}>✅ Diiwaan Geli</Btn>
+      </Modal>}
+
+      {dRepair&&<Modal title="📋 Farasmo Faahfaahin" onClose={()=>{setDetail(null);setRpyF(BPY);}}>
+        <div style={S.detG}>
+          <DR l="Macmiilka"    v={dRepair.customerName}/>
+          <DR l="Telefoon"     v={dRepair.phone}/>
+          <DR l="Model"        v={dRepair.model}/>
+          {dRepair.color&&   <DR l="Midab"    v={dRepair.color}/>}
+          {dRepair.imei&&    <DR l="IMEI"     v={dRepair.imei}/>}
+          <DR l="Dhibaatada"   v={dRepair.repairType+(dRepair.customIssue?" – "+dRepair.customIssue:"")}/>
+          {dRepair.password&&<DR l="Password" v={dRepair.password}/>}
+          <DR l="Lacagta"      v={dRepair.isChecking?"Checking":fmt(dRepair.price)} c={dRepair.isChecking?"#818cf8":"#fbbf24"}/>
+          <DR l="Lacag Bixin"  v={dRepair.payStatus} c={dRepair.payStatus==="Suubiyay"?"#4ade80":"#ef4444"}/>
+          <DR l="Xaaladda"     v={dRepair.status}/>
+          <DR l="Keenay"       v={dRepair.receivedDate}/>
+          <DR l="Qabtay"       v={dRepair.receivedBy}/>
+          {dRepair.doneDate&&<DR l="La Dhammaystay" v={dRepair.doneDate}/>}
+          {dRepair.givenBy&&<DR  l="Siiyay"         v={dRepair.givenBy}/>}
+          {dRepair.givenDate&&<DR l="Taariikhda Qaatay" v={dRepair.givenDate}/>}
+          {dRepair.notes&&<DR l="Faallo"             v={dRepair.notes}/>}
+        </div>
+        {dRepair.status!=="Dhammaatay"&&<div style={{marginTop:8}}>
+          <div style={S.lbl}>Cusboonaysii Xaaladda</div>
+          <div style={S.stBtns}>
+            <button style={{...S.stBtn,background:"#92400e"}} onClick={()=>updateRepairStatus(dRepair.id,"Socota")}>🔧 Socota</button>
+            <button style={{...S.stBtn,background:"#065f46"}} onClick={()=>updateRepairStatus(dRepair.id,"Dhammaatay")}>✅ Dhammaatay</button>
+          </div>
+        </div>}
+        {dRepair.status==="Dhammaatay"&&!dRepair.givenBy&&<div style={{marginTop:8}}>
+          <div style={S.lbl}>Cidda Mobilka Siisay</div>
+          <select style={S.inp} defaultValue="" onChange={e=>e.target.value&&setRepairGiver(dRepair.id,e.target.value)}>
+            <option value="">-- Dooro --</option>
+            {USERS.map(u=><option key={u.id} value={u.name}>{u.avatar} {u.name}</option>)}
+          </select>
+        </div>}
+        {!dRepair.isChecking&&dRepair.payStatus==="La'aanta"&&
+          <button style={{...S.fullB,background:"#065f46",marginTop:8}} onClick={()=>markRepairPaid(dRepair.id)}>💰 Lacagta Waa La Suubiyay (Full)</button>}
+        {!dRepair.isChecking&&dRepair.payStatus==="La'aanta"&&<div style={S.payBox}>
+          <div style={S.lbl}>💳 Dejin Lacag (Qayb)</div>
+          <G2><F l="Qadarka ($)" v={rpyF.amount} s={v=>setRpyF(p=>({...p,amount:v}))} ph="50" t="number"/>
+              <F l="Faallo" v={rpyF.note} s={v=>setRpyF(p=>({...p,note:v}))} ph="Hore u bixiyay..."/></G2>
+          <button style={{...S.fullB,background:"#1d4ed8",marginTop:4}} onClick={()=>addRepairPay(dRepair.id)}>➕ Ku Dar</button>
+        </div>}
+        {(dRepair.payments||[]).length>0&&<PayHist payments={dRepair.payments} total={dRepair.price}/>}
+      </Modal>}
+
+      {dCust&&<Modal title="🤝 Macmiil Deyn" onClose={()=>{setDetail(null);setPayF(BPY);}}>
+        <div style={S.detG}>
+          <DR l="Macmiilka"  v={dCust.custName}/>
+          {dCust.phone&&<DR l="Telefoon" v={dCust.phone}/>}
+          <DR l="Alaabta"    v={dCust.item}/>
+          <DR l="Deynta"     v={fmt(dCust.totalAmount)} c="#f472b6"/>
+          <DR l="La Bixiyay" v={fmt(dCust.paidAmount)}  c="#4ade80"/>
+          <DR l="Dhiman"     v={fmt(num(dCust.totalAmount)-num(dCust.paidAmount))} c={num(dCust.totalAmount)<=num(dCust.paidAmount)?"#4ade80":"#ef4444"}/>
+          <DR l="Taariikhda" v={dCust.date}/>
+        </div>
+        <div style={S.payBox}>
+          <div style={S.lbl}>💳 Ku Dar Lacag Bixin</div>
+          <G2><F l="Qadarka ($)" v={payF.amount} s={v=>setPayF(p=>({...p,amount:v}))} ph="50" t="number"/>
+              <F l="Faallo" v={payF.note} s={v=>setPayF(p=>({...p,note:v}))} ph="..."/></G2>
+          <button style={{...S.fullB,background:"#be185d",marginTop:4}} onClick={()=>addCustPay(dCust.id)}>➕ Ku Dar</button>
+        </div>
+        {(dCust.payments||[]).length>0&&<PayHist payments={dCust.payments} total={dCust.totalAmount}/>}
+      </Modal>}
+
+      {dSupp&&<Modal title="🏪 Supplier Faahfaahin" onClose={()=>{setDetail(null);setPayF(BPY);}}>
+        <div style={S.detG}>
+          <DR l="Shirkadda"    v={dSupp.companyName}/>
+          {dSupp.contactName&&<DR l="Xiriiriyaha" v={dSupp.contactName}/>}
+          {dSupp.phone&&      <DR l="Telefoon"    v={dSupp.phone}/>}
+          <DR l="Alaabta"      v={dSupp.itemDesc}/>
+          <DR l="Tirada"       v={`${dSupp.qty} qaybood`}/>
+          <DR l="Cost/Qaybood" v={fmt(dSupp.unitCost)} c="#94a3b8"/>
+          <DR l="Wadarta"      v={fmt(num(dSupp.qty)*num(dSupp.unitCost))} c="#fbbf24"/>
+          <DR l="Nooca Bixin"  v={dSupp.buyType==="kaash"?"💵 Kaash":"📋 Deyn"} c={dSupp.buyType==="kaash"?"#10b981":"#fb923c"}/>
+          {dSupp.buyType==="deyn"&&<>
+            <DR l="La Bixiyay" v={fmt(sumA(dSupp.payments||[],p=>p.amount))} c="#4ade80"/>
+            <DR l="Dhiman"     v={fmt(Math.max(0,num(dSupp.qty)*num(dSupp.unitCost)-sumA(dSupp.payments||[],p=>p.amount)))} c="#fb923c"/>
+          </>}
+          <DR l="Taariikhda"   v={dSupp.date}/>
+        </div>
+        {dSupp.buyType==="deyn"&&<div style={S.payBox}>
+          <div style={S.lbl}>💳 Ku Dar Lacag Bixin</div>
+          <G2><F l="Qadarka ($)" v={payF.amount} s={v=>setPayF(p=>({...p,amount:v}))} ph="50" t="number"/>
+              <F l="Faallo" v={payF.note} s={v=>setPayF(p=>({...p,note:v}))} ph="..."/></G2>
+          <button style={{...S.fullB,background:"#0e7490",marginTop:4}} onClick={()=>addSupplierPay(dSupp.id)}>➕ Ku Dar</button>
+        </div>}
+        {(dSupp.payments||[]).length>0&&<PayHist payments={dSupp.payments} total={num(dSupp.qty)*num(dSupp.unitCost)}/>}
+      </Modal>}
+
+      {toast&&<div style={{...S.toast,borderColor:toast.err?"#ef4444":"#c9a227"}}>{toast.msg}</div>}
+    </div>
+  );
+}
+
+function Login({onLogin}){
+  const [sel,setSel]=useState(null);
+  const [pin,setPin]=useState("");
+  const [err,setErr]=useState("");
+  const go=()=>{const u=USERS.find(u=>u.id===sel&&u.pin===pin);if(u)onLogin(u);else{setErr("PIN khaldan!");setPin("");}};
+  return(
+    <div style={S.loginBg}><div style={S.loginCard}>
+      <img src={LOGO} alt="" style={S.loginLogo} onError={e=>e.target.style.display="none"}/>
+      <div style={S.loginTitle}>Ramadan iPhone</div>
+      <div style={S.loginSub}>Electronic &amp; Repair</div>
+      <div style={S.lbl}>Cidda aad tahay dooro:</div>
+      <div style={S.userGrid}>
+        {USERS.map(u=><button key={u.id} style={{...S.uBtn,...(sel===u.id?S.uBtnA:{})}} onClick={()=>{setSel(u.id);setErr("");setPin("");}}>
+          <span style={{fontSize:24}}>{u.avatar}</span><span style={{fontSize:11,marginTop:3}}>{u.name}</span>
+        </button>)}
+      </div>
+      {sel&&<>
+        <div style={S.lbl}>PIN (4 tiro):</div>
+        <input style={S.pinInp} type="password" maxLength={4} value={pin} onChange={e=>setPin(e.target.value)} placeholder="••••" onKeyDown={e=>e.key==="Enter"&&go()}/>
+        {err&&<div style={{color:"#ef4444",textAlign:"center",fontSize:13}}>{err}</div>}
+        <button style={{...S.fullB,background:"linear-gradient(135deg,#c9a227,#a07a10)",color:"#000"}} onClick={go}>🔓 Gal Nidaamka</button>
+      </>}
+    </div></div>
+  );
+}
+
+const RCard=({r,onClick})=>{const sc=r.status==="Dhammaatay"?"#10b981":r.status==="Socota"?"#f59e0b":"#64748b";const pc=r.payStatus==="Suubiyay"?"#10b981":"#ef4444";return<div style={{...S.card,borderLeft:`3px solid ${sc}`,cursor:"pointer"}} onClick={onClick}><div style={S.cardRow}><span style={S.cardTitle}>{r.customerName}</span><div style={{display:"flex",gap:5}}><span style={{...S.badge,background:sc}}>{r.status}</span>{!r.isChecking&&<span style={{...S.badge,background:pc}}>{r.payStatus}</span>}</div></div><div style={S.cardSub}>{r.model}{r.color&&` • ${r.color}`} • {r.repairType}</div><div style={S.cardFooter}><span>📞 {r.phone}</span><span>📅 {r.receivedDate}</span>{!r.isChecking?<span style={{color:"#fbbf24",fontWeight:700}}>{fmt(r.price)}</span>:<span style={{color:"#818cf8",fontSize:10}}>Checking</span>}</div></div>;};
+const DCard=({d,onClick})=>{const rem=num(d.totalAmount)-num(d.paidAmount);return<div style={{...S.card,borderLeft:`3px solid ${rem>0?"#ef4444":"#10b981"}`,cursor:"pointer"}} onClick={onClick}><div style={S.cardRow}><span style={S.cardTitle}>{d.custName}</span><span style={{...S.badge,background:rem>0?"#7f1d1d":"#064e3b"}}>{rem>0?"Deyn Jira":"La Bixiyay"}</span></div><div style={S.cardSub}>{d.item}</div><div style={S.prRow}><PBx label="Wadarta" val={fmt(d.totalAmount)} c="#94a3b8"/><PBx label="La Bixiyay" val={fmt(d.paidAmount)} c="#4ade80"/><PBx label="Dhiman" val={fmt(rem)} c={rem>0?"#ef4444":"#4ade80"}/></div><div style={S.cardFooter}>{d.phone&&<span>📞 {d.phone}</span>}<span>📅 {d.date}</span></div></div>;};
+const PayHist=({payments,total})=>{const paid=payments.reduce((s,p)=>s+num(p.amount),0);return<div style={{marginTop:10}}><div style={S.lbl}>Taariikhda Lacag Bixinta</div>{payments.map((p,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:12,padding:"4px 0",borderBottom:"1px solid #1a1a1a",flexWrap:"wrap",gap:3}}><span style={{color:"#64748b"}}>📅 {p.date} 👤 {p.by}</span><span style={{color:"#4ade80",fontWeight:700}}>{fmt(p.amount)}</span></div>)}<div style={{display:"flex",justifyContent:"space-between",padding:"6px 0",fontWeight:700,fontSize:13}}><span style={{color:"#94a3b8"}}>La Bixiyay:</span><span style={{color:"#22d3ee"}}>{fmt(paid)}</span></div><div style={{display:"flex",justifyContent:"space-between",fontWeight:700,fontSize:13}}><span style={{color:"#94a3b8"}}>Dhiman:</span><span style={{color:paid>=num(total)?"#4ade80":"#f472b6"}}>{fmt(num(total)-paid)}</span></div></div>;};
+const Stat=({icon,label,val,color,sm})=><div style={{...S.statCard,borderTop:`3px solid ${color}`}}><span style={{fontSize:17}}>{icon}</span><div style={{fontWeight:800,color,fontSize:sm?12:20}}>{val}</div><div style={{fontSize:9,color:"#52524a",textTransform:"uppercase"}}>{label}</div></div>;
+const PBx=({label,val,c})=><div style={S.pbox}><div style={{fontSize:11,fontWeight:700,color:c}}>{val}</div><div style={{fontSize:9,color:"#475569",textTransform:"uppercase",marginTop:1}}>{label}</div></div>;
+const Sec=({title,children})=><><div style={S.secTitle}>{title}</div>{children}</>;
+const PHead=({title,onAdd,lbl="➕"})=><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><div style={S.secTitle2}>{title}</div><button style={S.addBtn} onClick={onAdd}>{lbl}</button></div>;
+const Abtn=({bg,fn,children})=><button style={{...S.actBtn,background:bg}} onClick={fn}>{children}</button>;
+const Modal=({title,onClose,children})=><div style={S.overlay} onClick={e=>e.target===e.currentTarget&&onClose()}><div style={S.modal}><div style={S.modalH}><span style={S.modalT}>{title}</span><button style={S.logoutBtn} onClick={onClose}>✕</button></div><div style={S.modalB}>{children}</div></div></div>;
+const F=({l,v,s,ph,t="text"})=><div><label style={S.lbl}>{l}</label><input style={S.inp} type={t} value={v} onChange={e=>s(e.target.value)} placeholder={ph}/></div>;
+const G2=({children})=><div style={S.g2}>{children}</div>;
+const Sl=({l,v,s,opts})=><div><label style={S.lbl}>{l}</label><select style={S.inp} value={v} onChange={e=>s(e.target.value)}>{opts.map(o=><option key={o} value={o==="--Dooro--"?"":o}>{o}</option>)}</select></div>;
+const Btn=({onClick,bg,children})=><button style={{...S.fullB,background:bg||"linear-gradient(135deg,#c9a227,#a07a10)",color:bg?"#fff":"#000"}} onClick={onClick}>{children}</button>;
+const DR=({l,v,c})=><div style={S.drRow}><span style={S.drL}>{l}</span><span style={{...S.drV,color:c||"#f1f5f9"}}>{v||"—"}</span></div>;
+const Empty=({msg})=><div style={S.empty}><span style={{fontSize:28}}>📂</span><span>{msg}</span></div>;
+
+const S={
+  app:{fontFamily:"'Segoe UI',Tahoma,sans-serif",background:"#080808",minHeight:"100vh",maxWidth:480,margin:"0 auto",color:"#f1f5f9",display:"flex",flexDirection:"column"},
+  topbar:{background:"linear-gradient(135deg,#111,#1a1200)",padding:"10px 14px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #c9a227",position:"sticky",top:0,zIndex:20},
+  logoImg:{width:44,height:44,borderRadius:"50%",objectFit:"cover",border:"2px solid #c9a227"},
+  shopInfo:{flex:1},shopName:{fontWeight:900,fontSize:15,color:"#c9a227"},shopSub:{fontSize:9,color:"#78716c"},
+  userChip:{display:"flex",alignItems:"center",gap:5,background:"#1a1200",border:"1px solid #c9a227",borderRadius:20,padding:"4px 9px",fontSize:12},
+  logoutBtn:{background:"none",border:"none",color:"#78716c",cursor:"pointer",fontSize:14,marginLeft:2},
+  body:{flex:1,padding:"12px 12px 80px",overflowY:"auto"},
+  nav:{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"#0d0d00",borderTop:"1px solid #c9a227",display:"flex",zIndex:20},
+  navBtn:{flex:1,background:"none",border:"none",color:"#52524a",padding:"8px 0 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:1},
+  navA:{color:"#c9a227"},
+  statsGrid:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12},
+  statCard:{background:"#111",borderRadius:12,padding:"10px 8px",display:"flex",flexDirection:"column",gap:3,border:"1px solid #1f1f1f"},
+  actGrid:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16},
+  actBtn:{border:"none",borderRadius:10,padding:"11px 6px",color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer"},
+  card:{background:"#111",borderRadius:14,padding:"12px",marginBottom:9,border:"1px solid #1f1f1f"},
+  cardRow:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3},
+  cardTitle:{fontWeight:700,fontSize:13,color:"#f5f5f5"},
+  cardSub:{fontSize:11,color:"#78716c",marginBottom:3},
+  cardFooter:{display:"flex",justifyContent:"space-between",fontSize:10,color:"#52524a",borderTop:"1px solid #1f1f1f",paddingTop:6,marginTop:5,gap:3,flexWrap:"wrap"},
+  badge:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,color:"#fff"},
+  prRow:{display:"flex",gap:6,flexWrap:"wrap",margin:"7px 0 3px"},
+  pbox:{flex:1,minWidth:55},
+  summBar:{background:"#111",border:"1px solid #1f1f1f",borderRadius:10,padding:"9px 12px",marginBottom:10,display:"flex",justifyContent:"space-around",fontSize:12,flexWrap:"wrap",gap:4},
+  secTitle:{fontSize:10,color:"#c9a227",textTransform:"uppercase",letterSpacing:".08em",fontWeight:700,margin:"12px 0 7px"},
+  secTitle2:{fontSize:13,color:"#c9a227",fontWeight:700},
+  addBtn:{background:"#c9a227",border:"none",color:"#000",borderRadius:8,padding:"6px 14px",fontSize:13,fontWeight:900,cursor:"pointer"},
+  srch:{width:"100%",background:"#111",border:"1px solid #222",borderRadius:10,padding:"9px 12px",color:"#f1f5f9",fontSize:13,outline:"none",marginBottom:10,boxSizing:"border-box"},
+  pill:{flex:1,background:"#111",border:"1px solid #2a2a2a",borderRadius:8,padding:"8px",color:"#78716c",fontSize:12,cursor:"pointer"},
+  pillA:{background:"#1a1200",border:"1px solid #c9a227",color:"#c9a227",fontWeight:700},
+  lbl:{display:"block",fontSize:10,color:"#78716c",fontWeight:700,marginBottom:4,textTransform:"uppercase",letterSpacing:".04em"},
+  inp:{width:"100%",background:"#080808",border:"1px solid #2a2a2a",borderRadius:10,padding:"10px 12px",color:"#f1f5f9",fontSize:13,outline:"none",boxSizing:"border-box"},
+  g2:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10},
+  fullB:{width:"100%",border:"none",borderRadius:12,padding:"13px",fontSize:13,fontWeight:900,cursor:"pointer",marginTop:2},
+  hint:{background:"#1a1200",border:"1px solid #c9a227",borderRadius:8,padding:"7px 11px",fontSize:12,color:"#fbbf24"},
+  chkRow:{display:"flex",alignItems:"center",gap:8},
+  stBtns:{display:"flex",gap:8,marginTop:6},
+  stBtn:{flex:1,border:"none",borderRadius:8,padding:"10px",color:"#fff",fontWeight:700,cursor:"pointer"},
+  segRow:{display:"flex",gap:8},
+  segB:{flex:1,background:"#111",border:"1px solid #2a2a2a",borderRadius:8,padding:"9px",color:"#78716c",fontSize:12,cursor:"pointer"},
+  segA:{background:"#1a1200",border:"1px solid #c9a227",color:"#c9a227",fontWeight:700},
+  detG:{display:"flex",flexDirection:"column",gap:2},
+  drRow:{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #1a1a1a",fontSize:12},
+  drL:{color:"#78716c",minWidth:100},drV:{fontWeight:600,textAlign:"right"},
+  payBox:{background:"#0c1a0c",border:"1px solid #1a3a1a",borderRadius:11,padding:"11px",marginTop:10,display:"flex",flexDirection:"column",gap:9},
+  overlay:{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:50,display:"flex",alignItems:"flex-end"},
+  modal:{background:"#0d0d00",border:"1px solid #c9a227",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,margin:"0 auto",maxHeight:"93vh",display:"flex",flexDirection:"column"},
+  modalH:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"13px 16px",borderBottom:"1px solid #c9a227"},
+  modalT:{fontWeight:800,fontSize:14,color:"#c9a227"},
+  modalB:{padding:"13px 15px 26px",overflowY:"auto",display:"flex",flexDirection:"column",gap:11},
+  toast:{position:"fixed",bottom:72,left:"50%",transform:"translateX(-50%)",background:"#0d0d00",border:"1px solid",color:"#f1f5f9",padding:"11px 20px",borderRadius:30,fontSize:13,fontWeight:700,zIndex:999,boxShadow:"0 8px 30px rgba(0,0,0,.7)",whiteSpace:"nowrap"},
+  empty:{display:"flex",flexDirection:"column",alignItems:"center",gap:7,color:"#333",padding:"30px 20px",fontSize:13},
+  loginBg:{minHeight:"100vh",background:"#080808",display:"flex",alignItems:"center",justifyContent:"center",padding:20},
+  loginCard:{background:"#0d0d00",border:"1px solid #c9a227",borderRadius:24,padding:"26px 20px",width:"100%",maxWidth:360,display:"flex",flexDirection:"column",gap:13},
+  loginLogo:{width:90,height:90,borderRadius:"50%",objectFit:"cover",border:"3px solid #c9a227",alignSelf:"center"},
+  loginTitle:{textAlign:"center",fontSize:20,fontWeight:900,color:"#c9a227"},
+  loginSub:{textAlign:"center",fontSize:11,color:"#78716c",marginTop:-8},
+  userGrid:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9},
+  uBtn:{background:"#111",border:"2px solid #2a2a2a",borderRadius:12,padding:"13px 8px",color:"#78716c",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3},
+  uBtnA:{border:"2px solid #c9a227",color:"#c9a227",background:"#1a1200"},
+  pinInp:{width:"100%",background:"#080808",border:"2px solid #2a2a2a",borderRadius:12,padding:"13px",color:"#c9a227",fontSize:26,textAlign:"center",letterSpacing:10,outline:"none",boxSizing:"border-box"},
+};
