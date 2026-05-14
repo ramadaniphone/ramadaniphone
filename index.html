@@ -3,640 +3,711 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Ramadan iPhone — Electronic & Repair</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<title>Ramadan iPhone</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'Segoe UI',sans-serif;background:#080808;color:#f1f5f9;min-height:100vh;max-width:480px;margin:0 auto;position:relative}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#080808;color:#f1f5f9;min-height:100vh;max-width:480px;margin:0 auto;position:relative}
 .topbar{background:linear-gradient(135deg,#111,#1a1200);padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:2px solid #c9a227;position:sticky;top:0;z-index:20}
-.logo{width:44px;height:44px;border-radius:50%;border:2px solid #c9a227;object-fit:cover;background:#111}
-.shop-name{font-weight:900;font-size:15px;color:#c9a227}
-.shop-sub{font-size:9px;color:#78716c}
-.user-chip{display:flex;align-items:center;gap:5px;background:#1a1200;border:1px solid #c9a227;border-radius:20px;padding:4px 9px;font-size:12px;margin-left:auto;flex-shrink:0}
-.logout-btn{background:none;border:none;color:#78716c;cursor:pointer;font-size:14px;padding:0;margin-left:2px}
+.sn{font-weight:900;font-size:15px;color:#c9a227}.ss{font-size:9px;color:#78716c}
+.uc{display:flex;align-items:center;gap:5px;background:#1a1200;border:1px solid #c9a227;border-radius:20px;padding:4px 9px;font-size:12px;margin-left:auto}
+.ib{background:none;border:none;color:#78716c;cursor:pointer;font-size:13px;padding:0 2px}
 .body{padding:12px 12px 82px}
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#0d0d00;border-top:2px solid #c9a227;display:flex;z-index:20}
-.nav-btn{flex:1;background:none;border:none;color:#52524a;padding:8px 0 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:9px;transition:color .2s}
-.nav-btn.active{color:#c9a227}
-.nav-btn .icon{font-size:17px}
-.stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
-.stat-card{background:#111;border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;gap:3px;border:1px solid #1f1f1f}
-.stat-val{font-weight:800;font-size:13px}
-.stat-lbl{font-size:9px;color:#52524a;text-transform:uppercase;letter-spacing:.03em}
-.act-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
-.act-btn{border:none;border-radius:10px;padding:11px 6px;color:#fff;font-weight:700;font-size:12px;cursor:pointer}
+.nb{flex:1;background:none;border:none;color:#52524a;padding:8px 0 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:9px}
+.nb.on{color:#c9a227}.nb .ic{font-size:17px}
+.sg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.sc{background:#111;border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;gap:3px;border:1px solid #1f1f1f}
+.sv{font-weight:800;font-size:13px}.sl{font-size:9px;color:#52524a;text-transform:uppercase}
+.ag{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.ab{border:none;border-radius:10px;padding:11px 6px;color:#fff;font-weight:700;font-size:12px;cursor:pointer}
 .card{background:#111;border-radius:14px;padding:12px;margin-bottom:9px;border:1px solid #1f1f1f}
-.card-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
-.card-title{font-weight:700;font-size:13px;color:#f5f5f5}
-.card-sub{font-size:11px;color:#78716c;margin-bottom:3px}
-.card-footer{display:flex;justify-content:space-between;font-size:10px;color:#52524a;border-top:1px solid #1f1f1f;padding-top:6px;margin-top:5px;gap:3px;flex-wrap:wrap}
-.badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;color:#fff;white-space:nowrap}
-.pr-row{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 3px}
-.pbox{flex:1;min-width:55px}
-.pbox-val{font-size:11px;font-weight:700}
-.pbox-lbl{font-size:9px;color:#475569;text-transform:uppercase;margin-top:1px}
-.sec-title{font-size:10px;color:#c9a227;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin:12px 0 7px}
-.sec-title2{font-size:13px;color:#c9a227;font-weight:700}
-.page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.add-btn{background:#c9a227;border:none;color:#000;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:900;cursor:pointer}
-.search{width:100%;background:#111;border:1px solid #222;border-radius:10px;padding:9px 12px;color:#f1f5f9;font-size:13px;outline:none;margin-bottom:10px}
-.summ-bar{background:#111;border:1px solid #1f1f1f;border-radius:10px;padding:9px 12px;margin-bottom:10px;display:flex;justify-content:space-around;font-size:12px;flex-wrap:wrap;gap:4px}
-.lbl{display:block;font-size:10px;color:#78716c;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.cr{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.ct{font-weight:700;font-size:13px;color:#f5f5f5}.cs{font-size:11px;color:#78716c;margin-bottom:3px}
+.cf{display:flex;justify-content:space-between;font-size:10px;color:#52524a;border-top:1px solid #1f1f1f;padding-top:6px;margin-top:5px;gap:3px;flex-wrap:wrap}
+.bdg{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;color:#fff}
+.pr{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 3px}
+.pb{flex:1;min-width:55px}.pv{font-size:11px;font-weight:700}.pl{font-size:9px;color:#475569;text-transform:uppercase;margin-top:1px}
+.st{font-size:10px;color:#c9a227;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin:12px 0 7px}
+.st2{font-size:13px;color:#c9a227;font-weight:700}
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.addb{background:#c9a227;border:none;color:#000;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:900;cursor:pointer}
+.srch{width:100%;background:#111;border:1px solid #222;border-radius:10px;padding:9px 12px;color:#f1f5f9;font-size:13px;outline:none;margin-bottom:10px}
+.sumb{background:#111;border:1px solid #1f1f1f;border-radius:10px;padding:9px 12px;margin-bottom:10px;display:flex;justify-content:space-around;font-size:12px;flex-wrap:wrap;gap:4px}
+.lbl{display:block;font-size:10px;color:#78716c;font-weight:700;margin-bottom:4px;text-transform:uppercase}
 .inp{width:100%;background:#080808;border:1px solid #2a2a2a;border-radius:10px;padding:10px 12px;color:#f1f5f9;font-size:13px;outline:none}
-.inp:focus{border-color:#c9a22755}
-select.inp option{background:#111}
+select.inp option{background:#111;color:#f1f5f9}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.full-btn{width:100%;border:none;border-radius:12px;padding:13px;font-size:13px;font-weight:900;cursor:pointer;margin-top:4px}
+.fbtn{width:100%;border:none;border-radius:12px;padding:13px;font-size:13px;font-weight:900;cursor:pointer;margin-top:4px}
 .hint{background:#1a1200;border:1px solid #c9a22766;border-radius:8px;padding:7px 11px;font-size:12px;color:#fbbf24}
-.seg-row{display:flex;gap:8px;margin-bottom:4px}
-.seg-btn{flex:1;background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:9px 4px;color:#78716c;font-size:11px;cursor:pointer;font-weight:600;transition:all .2s}
-.seg-btn.active{background:#1a1200;border-color:#c9a227;color:#c9a227;font-weight:700}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.srow{display:flex;gap:8px;margin-bottom:4px}
+.sbtn{flex:1;background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:9px 4px;color:#78716c;font-size:11px;cursor:pointer;font-weight:600}
+.sbtn.on{background:#1a1200;border-color:#c9a227;color:#c9a227;font-weight:700}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50;display:flex;align-items:flex-end;justify-content:center}
 .modal{background:#0d0d00;border:1px solid #c9a227;border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:93vh;display:flex;flex-direction:column}
-.modal-h{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #c9a227;flex-shrink:0}
-.modal-t{font-weight:800;font-size:14px;color:#c9a227}
-.close-btn{background:none;border:none;color:#78716c;font-size:20px;cursor:pointer;line-height:1}
-.modal-b{padding:13px 15px 26px;overflow-y:auto;display:flex;flex-direction:column;gap:11px}
-.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:#0d0d00;color:#f1f5f9;padding:11px 20px;border-radius:30px;font-size:13px;font-weight:700;z-index:999;box-shadow:0 8px 30px rgba(0,0,0,.7);white-space:nowrap;pointer-events:none}
-.empty{display:flex;flex-direction:column;align-items:center;gap:7px;color:#333;padding:30px 20px;font-size:13px;text-align:center}
-.loading{min-height:100vh;background:#080808;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.dots{display:flex;gap:8px}
-.dot{width:8px;height:8px;border-radius:50%;background:#c9a227;animation:pulse 1.2s infinite}
-.dot:nth-child(2){animation-delay:.2s}
-.dot:nth-child(3){animation-delay:.4s}
-@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
-.login-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.login-card{background:#0d0d00;border:1px solid #c9a227;border-radius:24px;padding:26px 20px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:13px}
-.login-logo{width:90px;height:90px;border-radius:50%;border:3px solid #c9a227;align-self:center;object-fit:cover;background:#111}
-.login-title{text-align:center;font-size:20px;font-weight:900;color:#c9a227}
-.login-sub{text-align:center;font-size:11px;color:#78716c;margin-top:-8px}
-.user-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.u-btn{background:#111;border:2px solid #2a2a2a;border-radius:12px;padding:13px 8px;color:#78716c;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;transition:all .2s}
-.u-btn.sel{border-color:#c9a227;color:#c9a227;background:#1a1200}
-.u-btn .av{font-size:24px}
-.pin-inp{width:100%;background:#080808;border:2px solid #2a2a2a;border-radius:12px;padding:13px;color:#c9a227;font-size:26px;text-align:center;letter-spacing:10px;outline:none}
-.pin-inp:focus{border-color:#c9a227}
-.det-grid{display:flex;flex-direction:column}
-.dr-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1a1a1a;font-size:12px}
-.dr-l{color:#78716c;min-width:110px}
-.dr-v{font-weight:600;text-align:right;word-break:break-word;max-width:200px}
-.pay-box{background:#0c1a0c;border:1px solid #1a3a1a;border-radius:11px;padding:11px;display:flex;flex-direction:column;gap:9px}
-.pay-hist{margin-top:10px}
-.pay-hist-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #1a1a1a;flex-wrap:wrap;gap:3px}
-.st-btns{display:flex;gap:8px;margin-top:6px}
-.st-btn{flex:1;border:none;border-radius:8px;padding:10px;color:#fff;font-weight:700;cursor:pointer}
-.chk-row{display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8}
-.pill-row{display:flex;gap:8px;margin-bottom:12px}
-.pill{flex:1;background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:8px;color:#78716c;font-size:12px;cursor:pointer;transition:all .2s}
-.pill.active{background:#1a1200;border-color:#c9a227;color:#c9a227;font-weight:700}
-/* Supplier payment styles */
-.pay-type-box{background:#0a1628;border:1px solid #1e3a5f;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
-.pay-type-title{font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase}
-.progress-bar{background:#1a1a1a;border-radius:20px;height:8px;overflow:hidden;margin-top:4px}
-.progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#c9a227,#4ade80);transition:width .4s}
-.installment-box{background:#0d0d00;border:1px solid #c9a22744;border-radius:10px;padding:10px;font-size:12px}
+.mh{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #c9a227;flex-shrink:0}
+.mt{font-weight:800;font-size:14px;color:#c9a227}
+.mb{padding:13px 15px 26px;overflow-y:auto;display:flex;flex-direction:column;gap:11px}
+.xbtn{background:none;border:none;color:#78716c;font-size:20px;cursor:pointer}
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:#0d0d00;color:#f1f5f9;padding:11px 20px;border-radius:30px;font-size:13px;font-weight:700;z-index:999;box-shadow:0 8px 30px rgba(0,0,0,.7);white-space:nowrap;border:1px solid #c9a227}
+.emp{display:flex;flex-direction:column;align-items:center;gap:7px;color:#333;padding:30px 20px;font-size:13px;text-align:center}
+.load{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+@keyframes pu{0%,100%{opacity:.3}50%{opacity:1}}
+.dot{width:8px;height:8px;border-radius:50%;background:#c9a227;animation:pu 1.2s infinite;display:inline-block;margin:0 4px}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+.lgbg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.lgcard{background:#0d0d00;border:1px solid #c9a227;border-radius:24px;padding:26px 20px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:13px}
+.lgt{text-align:center;font-size:20px;font-weight:900;color:#c9a227}
+.lgs{text-align:center;font-size:11px;color:#78716c;margin-top:-8px}
+.ug{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.ubtn{background:#111;border:2px solid #2a2a2a;border-radius:12px;padding:13px 8px;color:#78716c;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px}
+.ubtn.on{border-color:#c9a227;color:#c9a227;background:#1a1200}
+.pinp{width:100%;background:#080808;border:2px solid #2a2a2a;border-radius:12px;padding:13px;color:#c9a227;font-size:26px;text-align:center;letter-spacing:10px;outline:none}
+.dg{display:flex;flex-direction:column}
+.dr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1a1a1a;font-size:12px}
+.dl{color:#78716c;min-width:110px}.dv{font-weight:600;text-align:right}
+.pybox{background:#0c1a0c;border:1px solid #1a3a1a;border-radius:11px;padding:11px;display:flex;flex-direction:column;gap:9px}
+.stbs{display:flex;gap:8px;margin-top:6px}
+.stb{flex:1;border:none;border-radius:8px;padding:10px;color:#fff;font-weight:700;cursor:pointer}
+.ckr{display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8}
+.plrow{display:flex;gap:8px;margin-bottom:12px}
+.pill{flex:1;background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:8px;color:#78716c;font-size:12px;cursor:pointer}
+.pill.on{background:#1a1200;border-color:#c9a227;color:#c9a227;font-weight:700}
+.pgbar{background:#1a1a1a;border-radius:20px;height:8px;overflow:hidden;margin:6px 0 2px}
+.pgfil{height:100%;border-radius:20px;background:linear-gradient(90deg,#c9a227,#4ade80)}
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="loading">
-    <div style="width:80px;height:80px;border-radius:50%;border:3px solid #c9a227;background:#111;display:flex;align-items:center;justify-content:center;font-size:32px">📱</div>
+  <div class="load">
+    <div style="font-size:60px">📱</div>
     <div style="color:#c9a227;font-size:18px;font-weight:900">Ramadan iPhone</div>
-    <div style="color:#78716c;font-size:13px">Xogta la soo rarayo...</div>
-    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div style="color:#78716c;font-size:13px">La soo rarayo...</div>
+    <div><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
   </div>
 </div>
 
-<script type="module">
-const FB = {
-  apiKey:"AIzaSyAhF3rENrkIud502v2q9F1XUtSExM39Q2I",
-  authDomain:"ramadaniphone-510fb.firebaseapp.com",
-  projectId:"ramadaniphone-510fb",
-  storageBucket:"ramadaniphone-510fb.firebasestorage.app",
-  messagingSenderId:"877384103070",
-  appId:"1:877384103070:web:41799e223dbca63f86378f"
-};
-firebase.initializeApp(FB);
-const db = firebase.firestore();
-const TS = () => firebase.firestore.FieldValue.serverTimestamp();
+<script>
+// ── Firestore REST API (no SDK needed!) ───────────────────────────────────────
+const PROJECT = "ramadaniphone-510fb";
+const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
+const API_KEY = "AIzaSyAhF3rENrkIud502v2q9F1XUtSExM39Q2I";
 
-const USERS=[
-  {id:"owner",name:"Owner",role:"owner",pin:"0000",av:"👑"},
-  {id:"w1",name:"Worker 1",role:"tech",pin:"1111",av:"🔧"},
-  {id:"w2",name:"Worker 2",role:"tech",pin:"2222",av:"🔧"},
-  {id:"w3",name:"Worker 3",role:"tech",pin:"3333",av:"🔧"},
+// Convert Firestore REST format to plain object
+function fromFS(doc) {
+  if (!doc || !doc.fields) return null;
+  const obj = { _id: doc.name.split("/").pop() };
+  for (const [k, v] of Object.entries(doc.fields)) {
+    if (v.stringValue !== undefined) obj[k] = v.stringValue;
+    else if (v.integerValue !== undefined) obj[k] = Number(v.integerValue);
+    else if (v.doubleValue !== undefined) obj[k] = Number(v.doubleValue);
+    else if (v.booleanValue !== undefined) obj[k] = v.booleanValue;
+    else if (v.arrayValue !== undefined) obj[k] = (v.arrayValue.values || []).map(x => fromFS({name:"",fields:{"_":x}})?.["_"] ?? fromFSVal(x));
+    else if (v.mapValue !== undefined) obj[k] = fromFS({name:"",fields: v.mapValue.fields||{}});
+    else obj[k] = null;
+  }
+  return obj;
+}
+function fromFSVal(v) {
+  if (!v) return null;
+  if (v.stringValue !== undefined) return v.stringValue;
+  if (v.integerValue !== undefined) return Number(v.integerValue);
+  if (v.doubleValue !== undefined) return Number(v.doubleValue);
+  if (v.booleanValue !== undefined) return v.booleanValue;
+  if (v.mapValue !== undefined) return fromFS({name:"",fields:v.mapValue.fields||{}});
+  if (v.arrayValue !== undefined) return (v.arrayValue.values||[]).map(fromFSVal);
+  return null;
+}
+
+// Convert plain object to Firestore REST format
+function toFS(obj) {
+  const fields = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === "_id" || k === "_ts") continue;
+    fields[k] = toFSVal(v);
+  }
+  return { fields };
+}
+function toFSVal(v) {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === "boolean") return { booleanValue: v };
+  if (typeof v === "number") return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+  if (typeof v === "string") return { stringValue: v };
+  if (Array.isArray(v)) return { arrayValue: { values: v.map(toFSVal) } };
+  if (typeof v === "object") return { mapValue: { fields: Object.fromEntries(Object.entries(v).map(([k,x])=>[k,toFSVal(x)])) } };
+  return { stringValue: String(v) };
+}
+
+// REST API calls
+async function fsGet(col) {
+  try {
+    const r = await fetch(`${BASE}/${col}?key=${API_KEY}&pageSize=200`);
+    if (!r.ok) return [];
+    const d = await r.json();
+    return (d.documents || []).map(fromFS).filter(Boolean).reverse();
+  } catch { return []; }
+}
+async function fsAdd(col, data) {
+  try {
+    const r = await fetch(`${BASE}/${col}?key=${API_KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(toFS(data))
+    });
+    return r.ok;
+  } catch { return false; }
+}
+async function fsUpdate(col, id, data) {
+  try {
+    const fields = toFS(data).fields;
+    const mask = Object.keys(fields).map(f=>`updateMask.fieldPaths=${encodeURIComponent(f)}`).join("&");
+    const r = await fetch(`${BASE}/${col}/${id}?key=${API_KEY}&${mask}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fields })
+    });
+    return r.ok;
+  } catch { return false; }
+}
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+const USERS = [
+  {id:"owner",name:"Owner",   role:"owner",pin:"0000",av:"👑"},
+  {id:"w1",   name:"Ibrahim", role:"tech", pin:"1111",av:"🔧"},
+  {id:"w2",   name:"Maxamed", role:"tech", pin:"2222",av:"🔧"},
+  {id:"w3",   name:"Ayaanle", role:"tech", pin:"3333",av:"🔧"},
 ];
 const IMODELS=["iPhone 6","iPhone 6S","iPhone 7","iPhone 7 Plus","iPhone 8","iPhone 8 Plus","iPhone X","iPhone XS","iPhone XS Max","iPhone XR","iPhone 11","iPhone 11 Pro","iPhone 11 Pro Max","iPhone 12","iPhone 12 Mini","iPhone 12 Pro","iPhone 12 Pro Max","iPhone 13","iPhone 13 Mini","iPhone 13 Pro","iPhone 13 Pro Max","iPhone 14","iPhone 14 Plus","iPhone 14 Pro","iPhone 14 Pro Max","iPhone 15","iPhone 15 Plus","iPhone 15 Pro","iPhone 15 Pro Max","iPhone 16","iPhone 16 Plus","iPhone 16 Pro","iPhone 16 Pro Max","Kale"];
 const RTYPES=["Shaashadda (Screen)","Batariyada","Camera","Charging Port","Badhanka Home","Badhanka Dhinaca","Speaker","Microphone","Face ID","Back Glass","Motherboard","Biyo galay","Checking kaliya","Kale"];
 const ICATS=["📱 iPhone Celis","🎧 Earphones","⚡ Charger","🛡️ Screen Protector","📦 Case","🔋 Battery","🔩 Spare Part","🔁 Kale"];
+const COLS = ["repairs","inv","iphones","sales","debts","sups"];
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 const fmt = n => "$"+Number(n||0).toLocaleString();
 const num = n => Number(n||0);
-const gid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-const td = () => new Date().toLocaleDateString("en-GB");
-const sumP = (arr) => (arr||[]).reduce((s,p)=>s+num(p.amount),0);
+const tod = () => new Date().toLocaleDateString("en-GB");
+const sumP = arr => (arr||[]).reduce((s,p)=>s+num(p.amount),0);
 
-// State
+// ── State ─────────────────────────────────────────────────────────────────────
 const S = {
-  user:null, tab:"dash", modal:null, detail:null,
-  search:"", stockView:"items",
-  repairs:[], inventory:[], iphones:[], sales:[], debts:[], suppliers:[],
-  loaded:0
+  user:null, tab:"dash", modal:null, det:null,
+  srch:"", sv:"items",
+  repairs:[], inv:[], iphones:[], sales:[], debts:[], sups:[],
+  loading:true
 };
 
-// Firestore
-const COLS = ["repairs","inventory","iphones","sales","debts","suppliers"];
-COLS.forEach(col=>{
-  db.collection(col).orderBy("_ts","desc").onSnapshot(snap=>{
-    S[col]=snap.docs.map(d=>({...d.data(),_id:d.id}));
-    S.loaded++;
-    draw();
-  },()=>{S.loaded++;draw();});
-});
-
-const aDoc=(col,data)=>db.collection(col).add({...data,_ts:TS()});
-const uDoc=(col,id,data)=>db.collection(col).doc(id).update(data);
-
-// Toast
-function toast(msg,err=false){
-  const old=$("_toast"); if(old)old.remove();
-  const t=document.createElement("div");
-  t.id="_toast"; t.className="toast";
-  t.style.borderColor=err?"#ef4444":"#c9a227";
-  t.style.border="1px solid";
-  t.textContent=msg;
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),2800);
+// ── Load all data ─────────────────────────────────────────────────────────────
+async function loadAll() {
+  S.loading = true; render();
+  const results = await Promise.all(COLS.map(c => fsGet(c)));
+  COLS.forEach((c,i) => S[c] = results[i]);
+  S.loading = false; render();
 }
 
-// DRAW
-function draw(){
-  const app=$("app");
-  if(S.loaded<COLS.length){
-    app.innerHTML=`<div class="loading"><div style="width:80px;height:80px;border-radius:50%;border:3px solid #c9a227;background:#111;display:flex;align-items:center;justify-content:center;font-size:32px">📱</div><div style="color:#c9a227;font-size:18px;font-weight:900">Ramadan iPhone</div><div style="color:#78716c;font-size:13px">Xogta la soo rarayo...</div><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+// Poll every 5 seconds for real-time feel
+setInterval(async () => {
+  if (!S.loading && S.user) {
+    const results = await Promise.all(COLS.map(c => fsGet(c)));
+    COLS.forEach((c,i) => S[c] = results[i]);
+    render();
+  }
+}, 5000);
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, err=false) {
+  const old = $("_t"); if(old) old.remove();
+  const t = document.createElement("div");
+  t.id = "_t"; t.className = "toast";
+  t.style.borderColor = err ? "#ef4444" : "#c9a227";
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render() {
+  const app = $("app");
+  if (S.loading) {
+    app.innerHTML = `<div class="load"><div style="font-size:60px">📱</div><div style="color:#c9a227;font-size:18px;font-weight:900">Ramadan iPhone</div><div style="color:#78716c;font-size:13px">Xogta la soo rarayo...</div><div><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>`;
     return;
   }
-  if(!S.user){drawLogin();return;}
-  drawApp();
+  if (!S.user) { loginPage(); return; }
+  mainApp();
 }
 
-// ── LOGIN ────────────────────────────────────────────────────────────────────
-let selUser=null;
-function drawLogin(){
-  $("app").innerHTML=`<div class="login-bg"><div class="login-card">
-    <div class="login-logo" style="display:flex;align-items:center;justify-content:center;font-size:36px">📱</div>
-    <div class="login-title">Ramadan iPhone</div>
-    <div class="login-sub">Electronic & Repair</div>
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+let _su = null;
+function loginPage() {
+  $("app").innerHTML = `
+  <div class="lgbg"><div class="lgcard">
+    <div style="font-size:60px;text-align:center">📱</div>
+    <div class="lgt">Ramadan iPhone</div>
+    <div class="lgs">Electronic &amp; Repair</div>
     <div class="lbl">Cidda aad tahay dooro:</div>
-    <div class="user-grid">${USERS.map(u=>`<button class="u-btn" onclick="selU('${u.id}')"><span class="av">${u.av}</span>${u.name}</button>`).join("")}</div>
-    <div id="pin-area" style="display:none;flex-direction:column;gap:10px">
+    <div class="ug">
+      ${USERS.map(u=>`<button class="ubtn" id="ub${u.id}" onclick="_pu('${u.id}')"><span style="font-size:24px">${u.av}</span>${u.name}</button>`).join("")}
+    </div>
+    <div id="pa" style="display:none;flex-direction:column;gap:10px">
       <div class="lbl">PIN (4 tiro):</div>
-      <input class="pin-inp" id="pin-i" type="password" maxlength="4" placeholder="••••" onkeydown="if(event.key==='Enter')doLogin()">
-      <div id="pin-err" style="color:#ef4444;text-align:center;font-size:13px;display:none">❗ PIN khaldan!</div>
-      <button class="full-btn" style="background:linear-gradient(135deg,#c9a227,#a07a10);color:#000" onclick="doLogin()">🔓 Gal Nidaamka</button>
+      <input class="pinp" id="pi" type="password" maxlength="4" placeholder="••••" onkeydown="if(event.key==='Enter')_dl()">
+      <div id="pe" style="color:#ef4444;text-align:center;font-size:13px;display:none">❗ PIN khaldan!</div>
+      <button class="fbtn" style="background:linear-gradient(135deg,#c9a227,#a07a10);color:#000" onclick="_dl()">🔓 Gal Nidaamka</button>
     </div>
   </div></div>`;
 }
-window.selU=id=>{
-  selUser=USERS.find(u=>u.id===id);
-  document.querySelectorAll(".u-btn").forEach(b=>b.classList.remove("sel"));
-  document.querySelectorAll(".u-btn").forEach(b=>{if(b.textContent.includes(selUser.name))b.classList.add("sel");});
-  $("pin-area").style.display="flex";
-  $("pin-i").value="";
-  $("pin-err").style.display="none";
-  setTimeout(()=>$("pin-i").focus(),100);
-};
-window.doLogin=()=>{
-  if(!selUser)return;
-  if($("pin-i").value===selUser.pin){S.user=selUser;draw();}
-  else{$("pin-err").style.display="block";$("pin-i").value="";}
-};
-
-// ── COMPUTED ─────────────────────────────────────────────────────────────────
-function calc(){
-  const rRev=S.repairs.filter(r=>r.status==="Dhammaatay"&&r.payStatus==="Suubiyay").reduce((s,r)=>s+num(r.price),0);
-  const rOwe=S.repairs.filter(r=>r.status==="Dhammaatay"&&r.payStatus==="La'aanta").reduce((s,r)=>s+num(r.price),0);
-  const sRev=S.sales.reduce((s,x)=>s+num(x.totalPrice),0);
-  const sCst=S.sales.reduce((s,x)=>s+num(x.totalCost),0);
-  const dTot=S.debts.reduce((s,c)=>s+Math.max(0,num(c.totalAmount)-num(c.paidAmount)),0);
-  const spOwe=S.suppliers.filter(s=>s.buyType!=="kaash").reduce((s,x)=>s+Math.max(0,num(x.totalAmount)-sumP(x.payments)),0);
-  return{rRev,rOwe,sRev,sCst,sProfit:sRev-sCst,dTot,spOwe,ipStock:S.iphones.filter(i=>i.status==="Jira").length};
+function _pu(id) {
+  _su = USERS.find(u=>u.id===id);
+  document.querySelectorAll(".ubtn").forEach(b=>b.classList.remove("on"));
+  $("ub"+id).classList.add("on");
+  $("pa").style.display="flex";
+  $("pi").value=""; $("pe").style.display="none";
+  setTimeout(()=>$("pi")?.focus(),100);
+}
+function _dl() {
+  if(!_su)return;
+  if($("pi").value===_su.pin){S.user=_su;render();}
+  else{$("pe").style.display="block";$("pi").value="";}
 }
 
-// ── APP ───────────────────────────────────────────────────────────────────────
-function drawApp(){
-  const c=calc();
-  const TABS=[{id:"dash",ic:"📊",lb:"Guud"},{id:"repairs",ic:"🔧",lb:"Farasmo"},{id:"stock",ic:"📦",lb:"Stock"},{id:"sales",ic:"💰",lb:"Iib"},{id:"debts",ic:"🤝",lb:"Deyn"},{id:"sup",ic:"🏪",lb:"Supplier"}];
+// ── COMPUTED ──────────────────────────────────────────────────────────────────
+function calc() {
+  return {
+    rRev: S.repairs.filter(r=>r.status==="Dhammaatay"&&r.payStatus==="Suubiyay").reduce((s,r)=>s+num(r.price),0),
+    rOwe: S.repairs.filter(r=>r.status==="Dhammaatay"&&r.payStatus==="La'aanta").reduce((s,r)=>s+num(r.price),0),
+    sRev: S.sales.reduce((s,x)=>s+num(x.totalPrice),0),
+    sCst: S.sales.reduce((s,x)=>s+num(x.totalCost),0),
+    dTot: S.debts.reduce((s,c)=>s+Math.max(0,num(c.totalAmount)-num(c.paidAmount)),0),
+    spOw: S.sups.filter(s=>s.buyType!=="kaash").reduce((s,x)=>s+Math.max(0,num(x.totalAmount)-sumP(x.payments)),0),
+    ipSt: S.iphones.filter(i=>i.status==="Jira").length,
+  };
+}
+
+// ── MAIN APP ──────────────────────────────────────────────────────────────────
+function mainApp() {
+  const c = calc();
+  const TABS=[{id:"dash",ic:"📊",lb:"Guud"},{id:"repairs",ic:"🔧",lb:"Farasmo"},{id:"inv",ic:"📦",lb:"Stock"},{id:"sales",ic:"💰",lb:"Iib"},{id:"debts",ic:"🤝",lb:"Deyn"},{id:"sups",ic:"🏪",lb:"Supplier"}];
   let body="";
-  if(S.tab==="dash")body=dashTab(c);
-  else if(S.tab==="repairs")body=repairsTab();
-  else if(S.tab==="stock")body=stockTab();
-  else if(S.tab==="sales")body=salesTab(c);
-  else if(S.tab==="debts")body=debtsTab(c);
-  else if(S.tab==="sup")body=supTab(c);
+  if(S.tab==="dash")    body=tDash(c);
+  else if(S.tab==="repairs") body=tRepairs();
+  else if(S.tab==="inv")    body=tStock();
+  else if(S.tab==="sales")  body=tSales(c);
+  else if(S.tab==="debts")  body=tDebts(c);
+  else if(S.tab==="sups")   body=tSups(c);
 
   $("app").innerHTML=`
   <div class="topbar">
-    <div class="logo" style="display:flex;align-items:center;justify-content:center;font-size:20px">📱</div>
-    <div><div class="shop-name">Ramadan iPhone</div><div class="shop-sub">Electronic & Repair</div></div>
-    <div class="user-chip"><span style="font-size:8px;color:#4ade80">🟢</span><span>${S.user.av}</span><span style="font-size:11px">${S.user.name}</span><button class="logout-btn" onclick="S.user=null;draw()">✕</button></div>
+    <div style="font-size:28px">📱</div>
+    <div><div class="sn">Ramadan iPhone</div><div class="ss">Electronic &amp; Repair</div></div>
+    <div class="uc">
+      <span style="font-size:8px;color:#4ade80">🟢</span>
+      <span>${S.user.av}</span>
+      <span style="font-size:11px">${S.user.name}</span>
+      <button class="ib" onclick="oM('chPin')" title="Beddel PIN">🔑</button>
+      <button class="ib" onclick="S.user=null;render()">✕</button>
+    </div>
   </div>
   <div class="body">${body}</div>
-  <div class="nav">${TABS.map(t=>`<button class="nav-btn ${S.tab===t.id?"active":""}" onclick="goTab('${t.id}')"><span class="icon">${t.ic}</span>${t.lb}</button>`).join("")}</div>
-  ${S.modal?drawModal(S.modal):""}
-  ${S.detail?drawDetail(S.detail):""}`;
+  <div class="nav">${TABS.map(t=>`<button class="nb ${S.tab===t.id?"on":""}" onclick="gT('${t.id}')"><span class="ic">${t.ic}</span>${t.lb}</button>`).join("")}</div>
+  ${S.modal?mWrap(S.modal):""}
+  ${S.det?dWrap(S.det):""}`;
 }
-window.goTab=id=>{S.tab=id;S.search="";draw();};
-window.openModal=m=>{S.modal=m;draw();};
-window.closeModal=()=>{S.modal=null;draw();};
-window.closeDetail=()=>{S.detail=null;draw();};
 
-// ── DASH ──────────────────────────────────────────────────────────────────────
-function dashTab(c){
+function gT(t){S.tab=t;S.srch="";render();}
+function oM(m){S.modal=m;render();}
+function cM(){S.modal=null;render();}
+function cD(){S.det=null;render();}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function tDash(c){
   const unp=S.repairs.filter(r=>r.status==="Dhammaatay"&&r.payStatus==="La'aanta");
   const pnd=S.repairs.filter(r=>r.status!=="Dhammaatay");
-  const spDeyn=S.suppliers.filter(s=>s.buyType!=="kaash"&&Math.max(0,num(s.totalAmount)-sumP(s.payments))>0);
+  const spD=S.sups.filter(s=>s.buyType!=="kaash"&&Math.max(0,num(s.totalAmount)-sumP(s.payments))>0);
   return`
-  <div class="stats-grid">
-    <div class="stat-card" style="border-top:3px solid #f59e0b"><span style="font-size:17px">🔧</span><div class="stat-val" style="color:#f59e0b">${pnd.length}</div><div class="stat-lbl">Farasmo Jira</div></div>
-    <div class="stat-card" style="border-top:3px solid #10b981"><span style="font-size:17px">💰</span><div class="stat-val" style="color:#10b981;font-size:11px">${fmt(c.rRev)}</div><div class="stat-lbl">Dakhli Farasmo</div></div>
-    <div class="stat-card" style="border-top:3px solid #ef4444"><span style="font-size:17px">⚠️</span><div class="stat-val" style="color:#ef4444;font-size:11px">${fmt(c.rOwe)}</div><div class="stat-lbl">Lama Suubin</div></div>
-    <div class="stat-card" style="border-top:3px solid #22d3ee"><span style="font-size:17px">📱</span><div class="stat-val" style="color:#22d3ee">${c.ipStock}</div><div class="stat-lbl">iPhone Stock</div></div>
-    <div class="stat-card" style="border-top:3px solid #4ade80"><span style="font-size:17px">📈</span><div class="stat-val" style="color:#4ade80;font-size:11px">${fmt(c.sProfit)}</div><div class="stat-lbl">Faa'iido Iibka</div></div>
-    <div class="stat-card" style="border-top:3px solid #fb923c"><span style="font-size:17px">🏪</span><div class="stat-val" style="color:#fb923c;font-size:11px">${fmt(c.spOwe)}</div><div class="stat-lbl">Deyn Supplier</div></div>
+  <div class="sg">
+    <div class="sc" style="border-top:3px solid #f59e0b"><span style="font-size:17px">🔧</span><div class="sv" style="color:#f59e0b">${pnd.length}</div><div class="sl">Farasmo</div></div>
+    <div class="sc" style="border-top:3px solid #10b981"><span style="font-size:17px">💰</span><div class="sv" style="color:#10b981;font-size:11px">${fmt(c.rRev)}</div><div class="sl">Dakhli</div></div>
+    <div class="sc" style="border-top:3px solid #ef4444"><span style="font-size:17px">⚠️</span><div class="sv" style="color:#ef4444;font-size:11px">${fmt(c.rOwe)}</div><div class="sl">Lama Suubin</div></div>
+    <div class="sc" style="border-top:3px solid #22d3ee"><span style="font-size:17px">📱</span><div class="sv" style="color:#22d3ee">${c.ipSt}</div><div class="sl">iPhone Stock</div></div>
+    <div class="sc" style="border-top:3px solid #4ade80"><span style="font-size:17px">📈</span><div class="sv" style="color:#4ade80;font-size:11px">${fmt(c.sRev-c.sCst)}</div><div class="sl">Faa'iido</div></div>
+    <div class="sc" style="border-top:3px solid #fb923c"><span style="font-size:17px">🏪</span><div class="sv" style="color:#fb923c;font-size:11px">${fmt(c.spOw)}</div><div class="sl">Deyn Sup</div></div>
   </div>
-  <div class="act-grid">
-    <button class="act-btn" style="background:#b45309" onclick="openModal('repair')">🔧 Farasmo</button>
-    <button class="act-btn" style="background:#065f46" onclick="openModal('sale')">💰 Gadi</button>
-    <button class="act-btn" style="background:#1d4ed8" onclick="openModal('addItem')">📦 Badeeco</button>
-    <button class="act-btn" style="background:#6d28d9" onclick="openModal('addIphone')">📱 iPhone</button>
-    <button class="act-btn" style="background:#be185d" onclick="openModal('custDebt')">🤝 Deyn</button>
-    <button class="act-btn" style="background:#0e7490" onclick="openModal('supplier')">🏪 Supplier</button>
+  <div class="ag">
+    <button class="ab" style="background:#b45309" onclick="oM('repair')">🔧 Farasmo</button>
+    <button class="ab" style="background:#065f46" onclick="oM('sale')">💰 Gadi</button>
+    <button class="ab" style="background:#1d4ed8" onclick="oM('addItem')">📦 Badeeco</button>
+    <button class="ab" style="background:#6d28d9" onclick="oM('addIphone')">📱 iPhone</button>
+    <button class="ab" style="background:#be185d" onclick="oM('custDebt')">🤝 Deyn</button>
+    <button class="ab" style="background:#0e7490" onclick="oM('supplier')">🏪 Supplier</button>
   </div>
-  <div class="sec-title">⚠️ Farasmo Aan La Suubin</div>
-  ${unp.length===0?empty("Dhammaanba waa la suubiyay ✓"):unp.slice(0,3).map(r=>rCard(r)).join("")}
-  <div class="sec-title">🏪 Supplier Deyn</div>
-  ${spDeyn.length===0?empty("Supplier deyn ma jirto ✓"):spDeyn.slice(0,3).map(s=>spMiniCard(s)).join("")}
-  <div class="sec-title">🤝 Macaamiisha Deynta</div>
-  ${S.debts.filter(d=>num(d.totalAmount)>num(d.paidAmount)).length===0?empty("Deyn macmiil ah ma jirto ✓"):S.debts.filter(d=>num(d.totalAmount)>num(d.paidAmount)).slice(0,3).map(d=>dCard(d)).join("")}`;
+  <div class="st">⚠️ Farasmo Aan La Suubin</div>
+  ${unp.length===0?emp("Dhammaanba waa la suubiyay ✓"):unp.slice(0,3).map(r=>rC(r)).join("")}
+  <div class="st">🏪 Supplier Deyn</div>
+  ${spD.length===0?emp("Supplier deyn ma jirto ✓"):spD.slice(0,3).map(s=>spMini(s)).join("")}
+  <div class="st">🤝 Macaamiisha Deynta</div>
+  ${S.debts.filter(d=>num(d.totalAmount)>num(d.paidAmount)).length===0?emp("Deyn macmiil ah ma jirto ✓"):S.debts.filter(d=>num(d.totalAmount)>num(d.paidAmount)).slice(0,3).map(d=>dC(d)).join("")}`;
 }
 
-function spMiniCard(s){
-  const tc=num(s.totalAmount), pd=sumP(s.payments), rm=Math.max(0,tc-pd);
-  const pct=tc>0?Math.min(100,Math.round(pd/tc*100)):0;
-  return`<div class="card" style="border-left:3px solid #fb923c;cursor:pointer" onclick="S.detail={type:'sup',id:'${s._id}'};draw()">
-    <div class="card-row"><span class="card-title">${s.companyName}</span><span class="badge" style="background:#92400e">Deyn</span></div>
-    <div class="card-sub">${s.itemDesc}</div>
-    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-    <div style="font-size:10px;color:#64748b;margin-top:3px">${pct}% La bixiyay</div>
-    <div class="card-footer"><span>La bixiyay: <b style="color:#4ade80">${fmt(pd)}</b></span><span>Dhiman: <b style="color:#fb923c">${fmt(rm)}</b></span></div>
-  </div>`;
+function tRepairs(){
+  const q=S.srch.toLowerCase();
+  const f=S.repairs.filter(r=>!q||r.customerName?.toLowerCase().includes(q)||r.phone?.includes(q)||r.model?.toLowerCase().includes(q));
+  return`<div class="ph"><div class="st2">Farasmooyinka</div><button class="addb" onclick="oM('repair')">➕</button></div>
+  <input class="srch" placeholder="🔍 Magac, telefoon, model..." value="${S.srch}" oninput="S.srch=this.value;render()">
+  ${f.length===0?emp("Wax la helin waayo"):f.map(r=>rC(r)).join("")}`;
 }
 
-// ── REPAIRS ───────────────────────────────────────────────────────────────────
-function repairsTab(){
-  const Q=S.search.toLowerCase();
-  const fil=S.repairs.filter(r=>!Q||r.customerName?.toLowerCase().includes(Q)||r.phone?.includes(Q)||r.model?.toLowerCase().includes(Q));
-  return`<div class="page-head"><div class="sec-title2">Farasmooyinka</div><button class="add-btn" onclick="openModal('repair')">➕</button></div>
-  <input class="search" placeholder="🔍 Magac, telefoon, model..." value="${S.search}" oninput="S.search=this.value;draw()">
-  ${fil.length===0?empty("Wax la helin waayo"):fil.map(r=>rCard(r)).join("")}`;
-}
-
-function rCard(r){
-  const sc=r.status==="Dhammaatay"?"#10b981":r.status==="Socota"?"#f59e0b":"#64748b";
-  const pc=r.payStatus==="Suubiyay"?"#10b981":"#ef4444";
-  return`<div class="card" style="border-left:3px solid ${sc};cursor:pointer" onclick="S.detail={type:'repair',id:'${r._id}'};draw()">
-    <div class="card-row"><span class="card-title">${r.customerName}</span>
-      <div style="display:flex;gap:5px"><span class="badge" style="background:${sc}">${r.status}</span>${!r.isChecking?`<span class="badge" style="background:${pc}">${r.payStatus}</span>`:""}</div>
-    </div>
-    <div class="card-sub">${r.model}${r.color?` • ${r.color}`:""} • ${r.repairType}</div>
-    <div class="card-footer"><span>📞 ${r.phone}</span><span>📅 ${r.receivedDate}</span>${!r.isChecking?`<span style="color:#fbbf24;font-weight:700">${fmt(r.price)}</span>`:`<span style="color:#818cf8;font-size:10px">Checking</span>`}</div>
-  </div>`;
-}
-
-// ── STOCK ─────────────────────────────────────────────────────────────────────
-function stockTab(){
-  const vi=S.stockView;
-  return`<div class="pill-row">
-    <button class="pill ${vi==="items"?"active":""}" onclick="S.stockView='items';draw()">📦 Badeecadaha</button>
-    <button class="pill ${vi==="iphone"?"active":""}" onclick="S.stockView='iphone';draw()">📱 iPhone Celis</button>
+function tStock(){
+  return`<div class="plrow">
+    <button class="pill ${S.sv==="items"?"on":""}" onclick="S.sv='items';render()">📦 Badeecadaha</button>
+    <button class="pill ${S.sv==="iphone"?"on":""}" onclick="S.sv='iphone';render()">📱 iPhone Celis</button>
   </div>
-  ${vi==="items"?`<div class="page-head"><div class="sec-title2">Badeecadaha</div><button class="add-btn" onclick="openModal('addItem')">➕</button></div>
-  ${S.inventory.length===0?empty("Badeeco stock ma jiro"):S.inventory.map(it=>`
-  <div class="card" style="border-left:3px solid ${num(it.qty)<3?"#ef4444":"#10b981"}">
-    <div class="card-row"><span class="card-title">${it.name}</span><span class="badge" style="background:${num(it.qty)<3?"#7f1d1d":"#064e3b"}">${it.qty} jira</span></div>
-    <div class="card-sub">${it.category}</div>
-    <div class="pr-row">
-      <div class="pbox"><div class="pbox-val" style="color:#94a3b8">${fmt(it.costPrice)}</div><div class="pbox-lbl">Cost</div></div>
-      <div class="pbox"><div class="pbox-val" style="color:#22d3ee">${fmt(it.sellPrice)}</div><div class="pbox-lbl">Iibka</div></div>
-      <div class="pbox"><div class="pbox-val" style="color:#4ade80">${fmt(num(it.sellPrice)-num(it.costPrice))}</div><div class="pbox-lbl">Faa'iido</div></div>
-      <div class="pbox"><div class="pbox-val" style="color:#f59e0b">${fmt(num(it.costPrice)*num(it.qty))}</div><div class="pbox-lbl">Wadarta</div></div>
-    </div>
-    <div class="card-footer"><span>📅 ${it.date}</span>${it.supplierName?`<span>🏪 ${it.supplierName}</span>`:""}</div>
-  </div>`).join("")}
-  `:`<div class="page-head"><div class="sec-title2">iPhone Celis Stock</div><button class="add-btn" onclick="openModal('addIphone')">➕</button></div>
-  ${S.iphones.length===0?empty("iPhone stock ma jiro"):S.iphones.map(ip=>`
-  <div class="card" style="border-left:3px solid ${ip.status==="Jira"?"#22d3ee":"#374151"}">
-    <div class="card-row"><span class="card-title">${ip.model} ${ip.storage||""} ${ip.color||""}</span><span class="badge" style="background:${ip.status==="Jira"?"#0e7490":"#374151"}">${ip.status}</span></div>
-    ${ip.imei?`<div class="card-sub">IMEI: ${ip.imei}</div>`:""}
-    <div class="pr-row">
-      <div class="pbox"><div class="pbox-val" style="color:#94a3b8">${fmt(ip.costPrice)}</div><div class="pbox-lbl">Cost</div></div>
-      <div class="pbox"><div class="pbox-val" style="color:#22d3ee">${fmt(ip.sellPrice)}</div><div class="pbox-lbl">Iibka</div></div>
-      <div class="pbox"><div class="pbox-val" style="color:#4ade80">${fmt(num(ip.sellPrice)-num(ip.costPrice))}</div><div class="pbox-lbl">Faa'iido</div></div>
-    </div>
-    <div class="card-footer"><span>📅 ${ip.date}</span>${ip.soldTo?`<span>👤 ${ip.soldTo}</span>`:""}</div>
-  </div>`).join("")}`}`;
+  ${S.sv==="items"?`
+    <div class="ph"><div class="st2">Badeecadaha</div><button class="addb" onclick="oM('addItem')">➕</button></div>
+    ${S.inv.length===0?emp("Badeeco stock ma jiro"):S.inv.map(it=>`
+    <div class="card" style="border-left:3px solid ${num(it.qty)<3?"#ef4444":"#10b981"}">
+      <div class="cr"><span class="ct">${it.name}</span><span class="bdg" style="background:${num(it.qty)<3?"#7f1d1d":"#064e3b"}">${it.qty} jira</span></div>
+      <div class="cs">${it.category}</div>
+      <div class="pr">
+        <div class="pb"><div class="pv" style="color:#94a3b8">${fmt(it.costPrice)}</div><div class="pl">Cost</div></div>
+        <div class="pb"><div class="pv" style="color:#22d3ee">${fmt(it.sellPrice)}</div><div class="pl">Iibka</div></div>
+        <div class="pb"><div class="pv" style="color:#4ade80">${fmt(num(it.sellPrice)-num(it.costPrice))}</div><div class="pl">Faa'iido</div></div>
+        <div class="pb"><div class="pv" style="color:#f59e0b">${fmt(num(it.costPrice)*num(it.qty))}</div><div class="pl">Wadarta</div></div>
+      </div>
+      <div class="cf"><span>📅 ${it.date}</span>${it.supplierName?`<span>🏪 ${it.supplierName}</span>`:""}</div>
+    </div>`).join("")}`
+  :`<div class="ph"><div class="st2">iPhone Celis</div><button class="addb" onclick="oM('addIphone')">➕</button></div>
+    ${S.iphones.length===0?emp("iPhone stock ma jiro"):S.iphones.map(ip=>`
+    <div class="card" style="border-left:3px solid ${ip.status==="Jira"?"#22d3ee":"#374151"}">
+      <div class="cr"><span class="ct">${ip.model} ${ip.storage||""} ${ip.color||""}</span><span class="bdg" style="background:${ip.status==="Jira"?"#0e7490":"#374151"}">${ip.status}</span></div>
+      ${ip.imei?`<div class="cs">IMEI: ${ip.imei}</div>`:""}
+      <div class="pr">
+        <div class="pb"><div class="pv" style="color:#94a3b8">${fmt(ip.costPrice)}</div><div class="pl">Cost</div></div>
+        <div class="pb"><div class="pv" style="color:#22d3ee">${fmt(ip.sellPrice)}</div><div class="pl">Iibka</div></div>
+        <div class="pb"><div class="pv" style="color:#4ade80">${fmt(num(ip.sellPrice)-num(ip.costPrice))}</div><div class="pl">Faa'iido</div></div>
+      </div>
+      <div class="cf"><span>📅 ${ip.date}</span>${ip.soldTo?`<span>👤 ${ip.soldTo}</span>`:""}</div>
+    </div>`).join("")}`}`;
 }
 
-// ── SALES ─────────────────────────────────────────────────────────────────────
-function salesTab(c){
-  return`<div class="page-head"><div class="sec-title2">Diiwaanka Iibka</div><button class="add-btn" style="background:#065f46" onclick="openModal('sale')">💰 Gadi</button></div>
-  <div class="summ-bar"><span>Dakhli: <b style="color:#22d3ee">${fmt(c.sRev)}</b></span><span>Cost: <b style="color:#94a3b8">${fmt(c.sCst)}</b></span><span>Faa'iido: <b style="color:#4ade80">${fmt(c.sProfit)}</b></span></div>
-  ${S.sales.length===0?empty("Iib ma jiro"):S.sales.map(s=>`
+function tSales(c){
+  return`<div class="ph"><div class="st2">Diiwaanka Iibka</div><button class="addb" style="background:#065f46" onclick="oM('sale')">💰 Gadi</button></div>
+  <div class="sumb"><span>Dakhli: <b style="color:#22d3ee">${fmt(c.sRev)}</b></span><span>Cost: <b style="color:#94a3b8">${fmt(c.sCst)}</b></span><span>Faa'iido: <b style="color:#4ade80">${fmt(c.sRev-c.sCst)}</b></span></div>
+  ${S.sales.length===0?emp("Iib ma jiro"):S.sales.map(s=>`
   <div class="card" style="border-left:3px solid #10b981">
-    <div class="card-row"><span class="card-title">${s.itemName}</span><span class="badge" style="background:${s.payType==="kaash"?"#065f46":"#92400e"}">${s.payType==="kaash"?"💵 Kaash":"📋 Deyn"}</span></div>
-    <div class="card-sub">${s.category}${s.qty>1?` × ${s.qty}`:""}</div>
-    <div class="pr-row">
-      <div class="pbox"><div class="pbox-val" style="color:#94a3b8">${fmt(s.totalCost)}</div><div class="pbox-lbl">Cost</div></div>
-      <div class="pbox"><div class="pbox-val" style="color:#22d3ee">${fmt(s.totalPrice)}</div><div class="pbox-lbl">La Gadaa</div></div>
-      <div class="pbox"><div class="pbox-val" style="color:#4ade80">${fmt(s.totalPrice-s.totalCost)}</div><div class="pbox-lbl">Faa'iido</div></div>
-      ${s.deyn>0?`<div class="pbox"><div class="pbox-val" style="color:#f59e0b">${fmt(s.deyn)}</div><div class="pbox-lbl">Deyn Ah</div></div>`:""}
+    <div class="cr"><span class="ct">${s.itemName}</span><span class="bdg" style="background:${s.payType==="kaash"?"#065f46":"#92400e"}">${s.payType==="kaash"?"💵 Kaash":"📋 Deyn"}</span></div>
+    <div class="cs">${s.category}${s.qty>1?` × ${s.qty}`:""}</div>
+    <div class="pr">
+      <div class="pb"><div class="pv" style="color:#94a3b8">${fmt(s.totalCost)}</div><div class="pl">Cost</div></div>
+      <div class="pb"><div class="pv" style="color:#22d3ee">${fmt(s.totalPrice)}</div><div class="pl">La Gadaa</div></div>
+      <div class="pb"><div class="pv" style="color:#4ade80">${fmt(s.totalPrice-s.totalCost)}</div><div class="pl">Faa'iido</div></div>
     </div>
-    <div class="card-footer"><span>👤 ${s.custName}</span><span>🧑‍💼 ${s.soldBy}</span><span>📅 ${s.date}</span></div>
+    <div class="cf"><span>👤 ${s.custName}</span><span>🧑‍💼 ${s.soldBy}</span><span>📅 ${s.date}</span></div>
   </div>`).join("")}`;
 }
 
-// ── DEBTS ─────────────────────────────────────────────────────────────────────
-function debtsTab(c){
-  return`<div class="page-head"><div class="sec-title2">Macaamiisha Deynta</div><button class="add-btn" style="background:#be185d" onclick="openModal('custDebt')">➕</button></div>
-  <div class="summ-bar"><span>Wadarta Dhiman: <b style="color:#ef4444">${fmt(c.dTot)}</b></span></div>
-  ${S.debts.length===0?empty("Deyn macmiil ah ma jiro"):S.debts.map(d=>dCard(d)).join("")}`;
-}
-function dCard(d){
-  const rem=Math.max(0,num(d.totalAmount)-num(d.paidAmount));
-  return`<div class="card" style="border-left:3px solid ${rem>0?"#ef4444":"#10b981"};cursor:pointer" onclick="S.detail={type:'debt',id:'${d._id}'};draw()">
-    <div class="card-row"><span class="card-title">${d.custName}</span><span class="badge" style="background:${rem>0?"#7f1d1d":"#064e3b"}">${rem>0?"⏳ Deyn":"✅ La Bixiyay"}</span></div>
-    <div class="card-sub">${d.item}</div>
-    <div class="pr-row">
-      <div class="pbox"><div class="pbox-val" style="color:#94a3b8">${fmt(d.totalAmount)}</div><div class="pbox-lbl">Wadarta</div></div>
-      <div class="pbox"><div class="pbox-val" style="color:#4ade80">${fmt(d.paidAmount)}</div><div class="pbox-lbl">La Bixiyay</div></div>
-      <div class="pbox"><div class="pbox-val" style="color:${rem>0?"#ef4444":"#4ade80"}">${fmt(rem)}</div><div class="pbox-lbl">Dhiman</div></div>
-    </div>
-    <div class="card-footer">${d.phone?`<span>📞 ${d.phone}</span>`:""}<span>📅 ${d.date}</span></div>
-  </div>`;
+function tDebts(c){
+  return`<div class="ph"><div class="st2">Macaamiisha Deynta</div><button class="addb" style="background:#be185d" onclick="oM('custDebt')">➕</button></div>
+  <div class="sumb"><span>Wadarta Dhiman: <b style="color:#ef4444">${fmt(c.dTot)}</b></span></div>
+  ${S.debts.length===0?emp("Deyn macmiil ah ma jiro"):S.debts.map(d=>dC(d)).join("")}`;
 }
 
-// ── SUPPLIERS ─────────────────────────────────────────────────────────────────
-function supTab(c){
-  return`<div class="page-head"><div class="sec-title2">Suppliers / Companies</div><button class="add-btn" style="background:#0e7490" onclick="openModal('supplier')">➕</button></div>
-  <div class="summ-bar"><span>Wadarta Deyn Supplier: <b style="color:#fb923c">${fmt(c.spOwe)}</b></span></div>
-  ${S.suppliers.length===0?empty("Supplier ma jiro"):S.suppliers.map(s=>{
-    const tc=num(s.totalAmount), pd=sumP(s.payments), rm=Math.max(0,tc-pd);
-    const pct=tc>0?Math.min(100,Math.round(pd/tc*100)):100;
-    const isDeyn=s.buyType!=="kaash";
-    return`<div class="card" style="border-left:3px solid ${isDeyn?(rm>0?"#fb923c":"#10b981"):"#818cf8"};cursor:pointer" onclick="S.detail={type:'sup',id:'${s._id}'};draw()">
-      <div class="card-row"><span class="card-title">${s.companyName}</span>
-        <span class="badge" style="background:${s.buyType==="kaash"?"#065f46":rm<=0?"#065f46":"#92400e"}">${s.buyType==="kaash"?"💵 Kaash":rm<=0?"✅ La Bixiyay":"📋 Deyn"}</span>
+function tSups(c){
+  return`<div class="ph"><div class="st2">Suppliers</div><button class="addb" style="background:#0e7490" onclick="oM('supplier')">➕</button></div>
+  <div class="sumb"><span>Wadarta Deyn: <b style="color:#fb923c">${fmt(c.spOw)}</b></span></div>
+  ${S.sups.length===0?emp("Supplier ma jiro"):S.sups.map(s=>{
+    const tc=num(s.totalAmount),pd=sumP(s.payments),rm=Math.max(0,tc-pd),pct=tc>0?Math.min(100,Math.round(pd/tc*100)):100;
+    return`<div class="card" style="border-left:3px solid ${s.buyType==="kaash"||rm<=0?"#10b981":"#fb923c"};cursor:pointer" onclick="S.det={type:'sup',id:'${s._id}'};render()">
+      <div class="cr"><span class="ct">${s.companyName}</span><span class="bdg" style="background:${s.buyType==="kaash"||rm<=0?"#065f46":"#92400e"}">${s.buyType==="kaash"?"💵 Kaash":rm<=0?"✅ La Bixiyay":"📋 Deyn"}</span></div>
+      <div class="cs">👤 ${s.contactName}${s.phone?` · 📞 ${s.phone}`:""}</div>
+      <div class="cs">📦 ${s.itemDesc} × ${s.qty}</div>
+      ${s.buyType!=="kaash"?`<div class="pgbar"><div class="pgfil" style="width:${pct}%"></div></div><div style="font-size:10px;color:#64748b;margin-bottom:3px">${pct}% La bixiyay</div>`:""}
+      <div class="pr">
+        <div class="pb"><div class="pv" style="color:#fbbf24">${fmt(tc)}</div><div class="pl">Wadarta</div></div>
+        ${s.buyType!=="kaash"?`<div class="pb"><div class="pv" style="color:#4ade80">${fmt(pd)}</div><div class="pl">La Bixiyay</div></div>
+        <div class="pb"><div class="pv" style="color:${rm>0?"#fb923c":"#4ade80"}">${fmt(rm)}</div><div class="pl">Dhiman</div></div>`:""}
       </div>
-      <div class="card-sub">👤 ${s.contactName}${s.phone?` · 📞 ${s.phone}`:""}</div>
-      <div class="card-sub">📦 ${s.itemDesc} × ${s.qty} qaybood</div>
-      ${isDeyn?`<div class="progress-bar" style="margin:6px 0 2px"><div class="progress-fill" style="width:${pct}%"></div></div><div style="font-size:10px;color:#64748b;margin-bottom:4px">${pct}% La bixiyay</div>`:""}
-      <div class="pr-row">
-        <div class="pbox"><div class="pbox-val" style="color:#fbbf24">${fmt(tc)}</div><div class="pbox-lbl">Wadarta</div></div>
-        ${isDeyn?`<div class="pbox"><div class="pbox-val" style="color:#4ade80">${fmt(pd)}</div><div class="pbox-lbl">La Bixiyay</div></div>
-        <div class="pbox"><div class="pbox-val" style="color:${rm>0?"#fb923c":"#4ade80"}">${fmt(rm)}</div><div class="pbox-lbl">Dhiman</div></div>`:""}
-      </div>
-      <div class="card-footer"><span>📅 ${s.date}</span><span>👤 ${s.addedBy}</span></div>
+      <div class="cf"><span>📅 ${s.date}</span><span>👤 ${s.addedBy}</span></div>
     </div>`;
   }).join("")}`;
 }
 
-// ── MODALS ────────────────────────────────────────────────────────────────────
-function mWrap(title,content){
-  return`<div class="overlay" onclick="if(event.target===this)closeModal()">
-    <div class="modal">
-      <div class="modal-h"><span class="modal-t">${title}</span><button class="close-btn" onclick="closeModal()">✕</button></div>
-      <div class="modal-b">${content}</div>
+// ── CARDS ─────────────────────────────────────────────────────────────────────
+function rC(r){
+  const sc=r.status==="Dhammaatay"?"#10b981":r.status==="Socota"?"#f59e0b":"#64748b";
+  const pc=r.payStatus==="Suubiyay"?"#10b981":"#ef4444";
+  return`<div class="card" style="border-left:3px solid ${sc};cursor:pointer" onclick="S.det={type:'repair',id:'${r._id}'};render()">
+    <div class="cr"><span class="ct">${r.customerName}</span>
+      <div style="display:flex;gap:5px"><span class="bdg" style="background:${sc}">${r.status}</span>${!r.isChecking?`<span class="bdg" style="background:${pc}">${r.payStatus}</span>`:""}</div>
     </div>
+    <div class="cs">${r.model}${r.color?` · ${r.color}`:""} · ${r.repairType}</div>
+    <div class="cf"><span>📞 ${r.phone}</span><span>📅 ${r.receivedDate}</span>${!r.isChecking?`<span style="color:#fbbf24;font-weight:700">${fmt(r.price)}</span>`:`<span style="color:#818cf8;font-size:10px">Checking</span>`}</div>
   </div>`;
 }
-function fld(lbl,id,ph,type="text",val=""){return`<div><label class="lbl">${lbl}</label><input class="inp" id="${id}" type="${type}" placeholder="${ph}" value="${val}"></div>`;}
-function sel(lbl,id,opts,val=""){return`<div><label class="lbl">${lbl}</label><select class="inp" id="${id}">${opts.map(o=>`<option${o===val?" selected":""}>${o}</option>`).join("")}</select></div>`;}
-
-function drawModal(type){
-  if(type==="repair") return mWrap("🔧 Farasmo Cusub",`
-    <div class="g2">${fld("Magaca Macmiilka *","r-name","Faarax Axmed")}${fld("Telefoon *","r-phone","061xxxxxxx")}</div>
-    ${sel("Nooca iPhone *","r-model",["--Dooro--",...IMODELS])}
-    <div class="g2">${fld("Midab","r-color","Black")}${fld("IMEI","r-imei","Haddii la yaqaan")}</div>
-    ${sel("Dhibaatada *","r-rtype",["--Dooro--",...RTYPES])}
-    <div class="g2">${fld("Password","r-pass","Haddii la yaqaan")}${fld("Qiimaha ($)","r-price","150","number")}</div>
-    <div class="chk-row"><input type="checkbox" id="r-check"><label for="r-check">Checking kaliya (Lacag malahan)</label></div>
-    ${sel("Xaaladda","r-status",["Sugaya","Socota","Dhammaatay"])}
-    ${fld("Faallo","r-notes","Xog dheeraad ah...")}
-    <button class="full-btn" style="background:linear-gradient(135deg,#c9a227,#a07a10);color:#000" onclick="submitRepair()">✅ Diiwaan Geli</button>`);
-
-  if(type==="addItem") return mWrap("📦 Badeeco Cusub",`
-    ${fld("Magaca Badeecada *","i-name","AirPods Pro 2")}
-    ${sel("Nooca","i-cat",ICATS)}
-    <div class="g2">${fld("Cost/Qaybood ($) *","i-cost","50","number")}${fld("Qiimaha Iibka ($) *","i-sell","85","number")}</div>
-    <div id="i-hint"></div>
-    <div class="g2">${fld("Tirada *","i-qty","10","number")}${fld("Supplier","i-sup","Shirkad...")}</div>
-    <button class="full-btn" style="background:linear-gradient(135deg,#c9a227,#a07a10);color:#000" onclick="submitItem()">✅ Diiwaan Geli</button>`);
-
-  if(type==="addIphone") return mWrap("📱 iPhone Celis Cusub",`
-    ${sel("Nooca iPhone *","ip-model",["--Dooro--",...IMODELS])}
-    <div class="g2">${fld("Storage","ip-stor","256GB")}${fld("Midab","ip-color","Black")}</div>
-    <div class="g2">${fld("Cost ($) *","ip-cost","400","number")}${fld("Qiimaha Iibka ($) *","ip-sell","500","number")}</div>
-    <div class="g2">${fld("IMEI","ip-imei","Haddii la yaqaan")}${sel("Xaaladda","ip-cond",["Cusub","Isticmaal (Good)","Isticmaal (Fair)"])}</div>
-    ${fld("Supplier","ip-sup","Shirkad...")}
-    <button class="full-btn" style="background:linear-gradient(135deg,#c9a227,#a07a10);color:#000" onclick="submitIphone()">✅ Diiwaan Geli</button>`);
-
-  if(type==="sale") return mWrap("💰 Gadi Badeeco",`
-    <div class="seg-row">
-      <button class="seg-btn active" id="st-item" onclick="setSaleType('item')">📦 Badeeco</button>
-      <button class="seg-btn" id="st-ip" onclick="setSaleType('iphone')">📱 iPhone Celis</button>
+function dC(d){
+  const rm=Math.max(0,num(d.totalAmount)-num(d.paidAmount));
+  return`<div class="card" style="border-left:3px solid ${rm>0?"#ef4444":"#10b981"};cursor:pointer" onclick="S.det={type:'debt',id:'${d._id}'};render()">
+    <div class="cr"><span class="ct">${d.custName}</span><span class="bdg" style="background:${rm>0?"#7f1d1d":"#064e3b"}">${rm>0?"⏳ Deyn":"✅ La Bixiyay"}</span></div>
+    <div class="cs">${d.item}</div>
+    <div class="pr">
+      <div class="pb"><div class="pv" style="color:#94a3b8">${fmt(d.totalAmount)}</div><div class="pl">Wadarta</div></div>
+      <div class="pb"><div class="pv" style="color:#4ade80">${fmt(d.paidAmount)}</div><div class="pl">La Bixiyay</div></div>
+      <div class="pb"><div class="pv" style="color:${rm>0?"#ef4444":"#4ade80"}">${fmt(rm)}</div><div class="pl">Dhiman</div></div>
     </div>
-    <div id="s-item-sec">
-      <div><label class="lbl">Dooro Badeecad *</label><select class="inp" id="s-itemId"><option value="">--Dooro--</option>${S.inventory.filter(i=>num(i.qty)>0).map(i=>`<option value="${i._id}">${i.name} (${i.qty} jira) — ${fmt(i.sellPrice)}/qyb</option>`).join("")}</select></div>
-      ${fld("Tirada *","s-qty","1","number","1")}
-    </div>
-    <div id="s-ip-sec" style="display:none">
-      <div><label class="lbl">Dooro iPhone *</label><select class="inp" id="s-ipId"><option value="">--Dooro--</option>${S.iphones.filter(i=>i.status==="Jira").map(i=>`<option value="${i._id}">${i.model} ${i.storage||""} ${i.color||""} — ${fmt(i.sellPrice)}</option>`).join("")}</select></div>
-    </div>
-    <div class="seg-row">
-      <button class="seg-btn active" id="sp-kaash" onclick="setSalePay('kaash')">💵 Kaash</button>
-      <button class="seg-btn" id="sp-deyn" onclick="setSalePay('deyn')">📋 Deyn</button>
-    </div>
-    <div id="s-deyn-sec" style="display:none">
-      <div class="g2">${fld("Magaca Macmiilka","s-cust","Faarax")}${fld("Telefoon","s-cph","061...")}</div>
-      ${fld("Qadarka Deynta ($)","s-deyn","Qadar...","number")}
-    </div>
-    <button class="full-btn" style="background:#065f46;color:#fff" onclick="submitSale()">✅ Xaqiiji Iibka</button>`);
+    <div class="cf">${d.phone?`<span>📞 ${d.phone}</span>`:""}<span>📅 ${d.date}</span></div>
+  </div>`;
+}
+function spMini(s){
+  const tc=num(s.totalAmount),pd=sumP(s.payments),rm=Math.max(0,tc-pd),pct=tc>0?Math.min(100,Math.round(pd/tc*100)):0;
+  return`<div class="card" style="border-left:3px solid #fb923c;cursor:pointer" onclick="S.det={type:'sup',id:'${s._id}'};render()">
+    <div class="cr"><span class="ct">${s.companyName}</span><span class="bdg" style="background:#92400e">Deyn</span></div>
+    <div class="cs">${s.itemDesc}</div>
+    <div class="pgbar"><div class="pgfil" style="width:${pct}%"></div></div>
+    <div class="cf"><span>${pct}% La bixiyay</span><span>Dhiman: <b style="color:#fb923c">${fmt(rm)}</b></span></div>
+  </div>`;
+}
+function emp(m){return`<div class="emp"><span style="font-size:28px">📂</span>${m}</div>`;}
 
-  if(type==="custDebt") return mWrap("🤝 Deyn Macmiil Cusub",`
-    <div class="g2">${fld("Magaca Macmiilka *","d-name","Faarax Axmed")}${fld("Telefoon","d-phone","061...")}</div>
-    ${fld("Alaabta / Sababta *","d-item","iPhone 14...")}
-    <div class="g2">${fld("Wadarta Deynta ($) *","d-tot","500","number")}${fld("Hore U Bixiyay ($)","d-paid","0","number")}</div>
-    ${fld("Faallo","d-note","...")}
-    <button class="full-btn" style="background:#be185d;color:#fff" onclick="submitDebt()">✅ Diiwaan Geli</button>`);
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function F(l,id,ph,t="text",v=""){return`<div><label class="lbl">${l}</label><input class="inp" id="${id}" type="${t}" placeholder="${ph}" value="${v}"></div>`;}
+function SL(l,id,opts){return`<div><label class="lbl">${l}</label><select class="inp" id="${id}">${opts.map(o=>`<option>${o}</option>`).join("")}</select></div>`;}
 
-  // ── SUPPLIER MODAL (cusub oo leh lacag bixin flexible) ─────────────────────
-  if(type==="supplier") return mWrap("🏪 Supplier Cusub",`
-    <div class="g2">${fld("Magaca Shirkadda *","sp-co","ABC Traders")}${fld("Xiriiriyaha","sp-cnt","Axmed")}</div>
-    ${fld("Telefoon","sp-ph","061...")}
-    ${fld("Alaabta *","sp-item","iPhone 14 Screen...")}
-    ${sel("Nooca Alaabta","sp-cat",ICATS)}
-    <div class="g2">${fld("Tirada *","sp-qty","10","number")}${fld("Cost/Qaybood ($) *","sp-unit","50","number")}</div>
-    <div id="sp-total-hint"></div>
+let _sT="item",_sP="kaash",_spP="deyn";
+
+function mWrap(type){
+  const T={repair:"🔧 Farasmo Cusub",addItem:"📦 Badeeco Cusub",addIphone:"📱 iPhone Cusub",sale:"💰 Gadi Badeeco",custDebt:"🤝 Deyn Macmiil",supplier:"🏪 Supplier Cusub",chPin:"🔑 Beddel PIN",rstPin:"🔄 Reset PIN"};
+  return`<div class="ov" onclick="if(event.target===this)cM()">
+    <div class="modal"><div class="mh"><span class="mt">${T[type]||""}</span><button class="xbtn" onclick="cM()">✕</button></div>
+    <div class="mb">${mBody(type)}</div></div>
+  </div>`;
+}
+
+function mBody(t){
+  if(t==="repair") return`
+    <div class="g2">${F("Magaca Macmiilka *","rn","Faarax Axmed")}${F("Telefoon *","rp","061xxxxxxx")}</div>
+    ${SL("Nooca iPhone *","rm",["--Dooro--",...IMODELS])}
+    <div class="g2">${F("Midab","rc","Black")}${F("IMEI","ri","Haddii la yaqaan")}</div>
+    ${SL("Dhibaatada *","rrt",["--Dooro--",...RTYPES])}
+    <div class="g2">${F("Password","rpw","Haddii la yaqaan")}${F("Qiimaha ($)","rpr","150","number")}</div>
+    <div class="ckr"><input type="checkbox" id="rck"><label for="rck">Checking kaliya (Lacag malahan)</label></div>
+    ${SL("Xaaladda","rst",["Sugaya","Socota","Dhammaatay"])}
+    ${F("Faallo","rnt","Xog dheeraad ah...")}
+    <button class="fbtn" style="background:linear-gradient(135deg,#c9a227,#a07a10);color:#000" onclick="sbRep()">✅ Diiwaan Geli</button>`;
+
+  if(t==="addItem") return`
+    ${F("Magaca Badeecada *","in","AirPods Pro 2")}
+    ${SL("Nooca","ic",ICATS)}
+    <div class="g2">${F("Cost/Qaybood ($) *","ico","50","number")}${F("Qiimaha Iibka ($) *","ise","85","number")}</div>
+    <div id="ih"></div>
+    <div class="g2">${F("Tirada *","iq","10","number")}${F("Supplier","isu","Shirkad...")}</div>
+    <button class="fbtn" style="background:linear-gradient(135deg,#c9a227,#a07a10);color:#000" onclick="sbItem()">✅ Diiwaan Geli</button>`;
+
+  if(t==="addIphone") return`
+    ${SL("Nooca iPhone *","ipm",["--Dooro--",...IMODELS])}
+    <div class="g2">${F("Storage","ips","256GB")}${F("Midab","ipc","Black")}</div>
+    <div class="g2">${F("Cost ($) *","ipco","400","number")}${F("Qiimaha Iibka ($) *","ipse","500","number")}</div>
+    <div class="g2">${F("IMEI","ipi","Haddii la yaqaan")}${SL("Xaaladda","ipcd",["Cusub","Isticmaal (Good)","Isticmaal (Fair)"])}</div>
+    ${F("Supplier","ipsu","Shirkad...")}
+    <button class="fbtn" style="background:linear-gradient(135deg,#c9a227,#a07a10);color:#000" onclick="sbIph()">✅ Diiwaan Geli</button>`;
+
+  if(t==="sale") return`
+    <div class="srow">
+      <button class="sbtn ${_sT==="item"?"on":""}" onclick="_st('item')">📦 Badeeco</button>
+      <button class="sbtn ${_sT==="iphone"?"on":""}" onclick="_st('iphone')">📱 iPhone</button>
+    </div>
+    <div id="sis" ${_sT!=="item"?'style="display:none"':""}>
+      <div><label class="lbl">Dooro Badeecad *</label><select class="inp" id="sii"><option value="">--Dooro--</option>${S.inv.filter(i=>num(i.qty)>0).map(i=>`<option value="${i._id}">${i.name} (${i.qty}) — ${fmt(i.sellPrice)}</option>`).join("")}</select></div>
+      ${F("Tirada *","sq","1","number","1")}
+    </div>
+    <div id="sips" ${_sT!=="iphone"?'style="display:none"':""}>
+      <div><label class="lbl">Dooro iPhone *</label><select class="inp" id="sip"><option value="">--Dooro--</option>${S.iphones.filter(i=>i.status==="Jira").map(i=>`<option value="${i._id}">${i.model} ${i.storage||""} ${i.color||""} — ${fmt(i.sellPrice)}</option>`).join("")}</select></div>
+    </div>
+    <div class="srow">
+      <button class="sbtn ${_sP==="kaash"?"on":""}" onclick="_sp('kaash')">💵 Kaash</button>
+      <button class="sbtn ${_sP==="deyn"?"on":""}" onclick="_sp('deyn')">📋 Deyn</button>
+    </div>
+    <div id="sds" ${_sP!=="deyn"?'style="display:none"':""}>
+      <div class="g2">${F("Magaca Macmiilka","scn","Faarax")}${F("Telefoon","scp","061...")}</div>
+      ${F("Qadarka Deynta ($)","sda","Qadar...","number")}
+    </div>
+    <button class="fbtn" style="background:#065f46;color:#fff" onclick="sbSale()">✅ Xaqiiji Iibka</button>`;
+
+  if(t==="custDebt") return`
+    <div class="g2">${F("Magaca Macmiilka *","dn","Faarax Axmed")}${F("Telefoon","dp","061...")}</div>
+    ${F("Alaabta / Sababta *","di","iPhone 14...")}
+    <div class="g2">${F("Wadarta Deynta ($) *","dt","500","number")}${F("Hore U Bixiyay ($)","dpa","0","number")}</div>
+    <button class="fbtn" style="background:#be185d;color:#fff" onclick="sbDebt()">✅ Diiwaan Geli</button>`;
+
+  if(t==="supplier") return`
+    <div class="g2">${F("Magaca Shirkadda *","spco","ABC Traders")}${F("Xiriiriyaha","spcn","Axmed")}</div>
+    ${F("Telefoon","spph","061...")}
+    ${F("Alaabta *","spit","iPhone 14 Screen...")}
+    ${SL("Nooca Alaabta","spca",ICATS)}
+    <div class="g2">${F("Tirada *","spq","10","number")}${F("Cost/Qaybood ($) *","spu","50","number")}</div>
+    <div id="spth"></div>
     <div class="lbl" style="margin-top:4px">Nooca Lacag Bixinta *</div>
-    <div class="seg-row">
-      <button class="seg-btn" id="bt-kaash" onclick="setSpPay('kaash')">💵 Kaash</button>
-      <button class="seg-btn active" id="bt-deyn" onclick="setSpPay('deyn')">📋 Deyn</button>
-      <button class="seg-btn" id="bt-qayb" onclick="setSpPay('qayb')">💳 Qayb+Deyn</button>
+    <div class="srow">
+      <button class="sbtn ${_spP==="kaash"?"on":""}" onclick="_spp('kaash')">💵 Kaash</button>
+      <button class="sbtn ${_spP==="deyn"?"on":""}" onclick="_spp('deyn')">📋 Deyn</button>
+      <button class="sbtn ${_spP==="qayb"?"on":""}" onclick="_spp('qayb')">💳 Qayb+Deyn</button>
     </div>
-    <div id="sp-kaash-sec" style="display:none">
-      <div class="hint">💵 Wadarta waa la bixiyay — deyn ma jirto</div>
+    <div id="spks" ${_spP!=="kaash"?'style="display:none"':""}><div class="hint">💵 Wadarta waa la bixiyay — deyn ma jirto</div></div>
+    <div id="spds" ${_spP!=="deyn"?'style="display:none"':""}><div class="hint">📋 Waxba hadda lama bixin — tartiib baa laga bixiyaa</div></div>
+    <div id="spqs" ${_spP!=="qayb"?'style="display:none"':""}>
+      ${F("Hadda La Bixiyay ($) *","sppn","0","number")}
+      <div id="spqh" class="hint" style="margin-top:6px">💳 Dhinta = Wadarta − Hadda la bixiyay</div>
     </div>
-    <div id="sp-deyn-sec">
-      <div class="hint">📋 Waxba hadda lama bixin — tartiib baa laga bixiyaa</div>
+    ${F("Faallo","spnt","...")}
+    <button class="fbtn" style="background:#0e7490;color:#fff" onclick="sbSup()">✅ Diiwaan Geli</button>`;
+
+  if(t==="chPin") return`
+    <div class="hint" style="margin-bottom:4px">PIN-kaaga cusub dooro — 4 tiro</div>
+    ${F("PIN-ka Hadda Jira *","cpc","••••","password")}
+    ${F("PIN-ka Cusub *","cpn","4 tiro","password")}
+    ${F("Xaqiiji PIN-ka Cusub *","cpx","4 tiro","password")}
+    <button class="fbtn" style="background:linear-gradient(135deg,#c9a227,#a07a10);color:#000" onclick="sbChPin()">✅ Beddel PIN-ka</button>
+    ${S.user.role==="owner"?`<div style="margin-top:14px;border-top:1px solid #1f1f1f;padding-top:12px">
+      <div class="lbl" style="color:#f472b6">👑 Owner — Reset PIN Shaqaalaha</div>
+      <button class="fbtn" style="background:#7c3aed;color:#fff;margin-top:6px" onclick="cM();setTimeout(()=>oM('rstPin'),50)">🔄 Reset PIN Shaqaale</button>
+    </div>`:""}`;
+
+  if(t==="rstPin") return`
+    <div><label class="lbl">Dooro Shaqaalaha</label>
+      <select class="inp" id="rpu">
+        <option value="">--Dooro--</option>
+        ${USERS.filter(u=>u.role!=="owner").map(u=>`<option value="${u.id}">${u.av} ${u.name}</option>`).join("")}
+      </select>
     </div>
-    <div id="sp-qayb-sec" style="display:none">
-      ${fld("Hadda La Bixiyay ($) *","sp-paid-now","0","number")}
-      <div class="hint" id="sp-qayb-hint">💳 Dhinta = Wadarta − Hadda la bixiyay</div>
-    </div>
-    ${fld("Faallo","sp-note","...")}
-    <button class="full-btn" style="background:#0e7490;color:#fff" onclick="submitSupplier()">✅ Diiwaan Geli</button>`);
+    ${F("PIN Cusub *","rpn","4 tiro","password")}
+    ${F("Xaqiiji PIN Cusub *","rpx","4 tiro","password")}
+    <button class="fbtn" style="background:#7c3aed;color:#fff" onclick="sbRstPin()">✅ Reset PIN-ka</button>`;
 
   return "";
 }
 
-// Sale type toggle
-let saleType="item", salePay="kaash";
-window.setSaleType=t=>{
-  saleType=t;
-  $("s-item-sec").style.display=t==="item"?"block":"none";
-  $("s-ip-sec").style.display=t==="iphone"?"block":"none";
-  $("st-item").classList.toggle("active",t==="item");
-  $("st-ip").classList.toggle("active",t==="iphone");
-};
-window.setSalePay=t=>{
-  salePay=t;
-  $("s-deyn-sec").style.display=t==="deyn"?"flex":"none";
-  if($("s-deyn-sec"))$("s-deyn-sec").style.flexDirection="column";
-  $("sp-kaash").classList.toggle("active",t==="kaash");
-  $("sp-deyn").classList.toggle("active",t==="deyn");
-};
+function _st(t){_sT=t;render();}
+function _sp(t){_sP=t;render();}
+function _spp(t){_spP=t;render();}
 
-// Supplier pay type
-let spPayType="deyn";
-window.setSpPay=t=>{
-  spPayType=t;
-  ["kaash","deyn","qayb"].forEach(x=>{
-    const el=$(`bt-${x}`); const sec=$(`sp-${x}-sec`);
-    if(el)el.classList.toggle("active",t===x);
-    if(sec)sec.style.display=t===x?"block":"none";
-  });
-};
-
-// Auto-hint for item cost/sell
+// Auto hints
 document.addEventListener("input",e=>{
-  if(["i-cost","i-sell"].includes(e.target.id)){
-    const c=num($("i-cost")?.value), s=num($("i-sell")?.value);
-    const h=$("i-hint");
-    if(h&&c&&s) h.innerHTML=s>c?`<div class="hint">📈 Faa'iido/qaybood: <b style="color:#4ade80">${fmt(s-c)}</b></div>`:`<div class="hint" style="color:#ef4444">❗ Qiimaha iibku waa inuu ka sarreeyo costka</div>`;
+  if(["ico","ise"].includes(e.target?.id)){
+    const c=num($("ico")?.value),s=num($("ise")?.value),h=$("ih");
+    if(h&&c&&s) h.innerHTML=s>c?`<div class="hint">📈 Faa'iido/qaybood: <b style="color:#4ade80">${fmt(s-c)}</b></div>`:`<div class="hint" style="color:#ef4444">❗ Qiimaha iibku waa inuu sarreeyo</div>`;
   }
-  if(["sp-qty","sp-unit","sp-paid-now"].includes(e.target.id)){
-    const qty=num($("sp-qty")?.value), uc=num($("sp-unit")?.value);
-    const tot=qty*uc;
-    const h=$("sp-total-hint");
-    if(h&&tot>0) h.innerHTML=`<div class="hint">💰 Wadarta: <b style="color:#fbbf24">${fmt(tot)}</b></div>`;
-    const ph=$("sp-qayb-hint");
-    const pn=num($("sp-paid-now")?.value);
-    if(ph&&tot>0) ph.innerHTML=`💳 Hadda la bixiyay: <b style="color:#4ade80">${fmt(pn)}</b> — Dhiman: <b style="color:#fb923c">${fmt(Math.max(0,tot-pn))}</b>`;
+  if(["spq","spu","sppn"].includes(e.target?.id)){
+    const q=num($("spq")?.value),u=num($("spu")?.value),tot=q*u,h=$("spth");
+    if(h&&tot) h.innerHTML=`<div class="hint">💰 Wadarta: <b style="color:#fbbf24">${fmt(tot)}</b></div>`;
+    const pn=num($("sppn")?.value),qh=$("spqh");
+    if(qh&&tot) qh.innerHTML=`💳 Hadda: <b style="color:#4ade80">${fmt(pn)}</b> — Dhiman: <b style="color:#fb923c">${fmt(Math.max(0,tot-pn))}</b>`;
   }
 });
 
-// ── SUBMIT HANDLERS ──────────────────────────────────────────────────────────
-window.submitRepair=async()=>{
-  const name=$("r-name")?.value, phone=$("r-phone")?.value, model=$("r-model")?.value, rtype=$("r-rtype")?.value;
-  if(!name||!phone||!model||!rtype||model==="--Dooro--"||rtype==="--Dooro--") return toast("❗ Buuxi goobaha muhiimka ah",true);
-  await aDoc("repairs",{customerName:name,phone,model,repairType:rtype,password:$("r-pass")?.value||"",imei:$("r-imei")?.value||"",color:$("r-color")?.value||"",isChecking:$("r-check")?.checked||false,price:num($("r-price")?.value),notes:$("r-notes")?.value||"",status:$("r-status")?.value||"Sugaya",payStatus:"La'aanta",receivedBy:S.user.name,receivedDate:td(),doneDate:"",givenBy:"",givenDate:"",payments:[]});
-  closeModal();toast("✅ Farasmo la diiwaan geliyey!");
-};
-
-window.submitItem=async()=>{
-  const name=$("i-name")?.value, cost=num($("i-cost")?.value), sell=num($("i-sell")?.value), qty=num($("i-qty")?.value);
-  if(!name||!cost||!sell||!qty) return toast("❗ Buuxi goobaha muhiimka ah",true);
-  if(sell<=cost) return toast("❗ Qiimaha iibku waa inuu sarreeyo costka",true);
-  await aDoc("inventory",{name,category:$("i-cat")?.value,costPrice:cost,sellPrice:sell,qty,supplierName:$("i-sup")?.value||"",addedBy:S.user.name,date:td()});
-  closeModal();toast("✅ Badeeco la diiwaan geliyey!");
-};
-
-window.submitIphone=async()=>{
-  const model=$("ip-model")?.value, cost=num($("ip-cost")?.value), sell=num($("ip-sell")?.value);
-  if(!model||model==="--Dooro--"||!cost||!sell) return toast("❗ Buuxi goobaha muhiimka ah",true);
-  await aDoc("iphones",{model,storage:$("ip-stor")?.value||"",color:$("ip-color")?.value||"",imei:$("ip-imei")?.value||"",costPrice:cost,sellPrice:sell,condition:$("ip-cond")?.value||"Cusub",supplierName:$("ip-sup")?.value||"",status:"Jira",addedBy:S.user.name,date:td()});
-  closeModal();toast("✅ iPhone stock la diiwaan geliyey!");
-};
-
-window.submitSale=async()=>{
-  const cust=$("s-cust")?.value||"Macmiil", cph=$("s-cph")?.value||"", deynAmt=num($("s-deyn")?.value);
-  if(saleType==="item"){
-    const itemId=$("s-itemId")?.value, qty=num($("s-qty")?.value||1);
-    const it=S.inventory.find(i=>i._id===itemId);
+// ── SUBMIT HANDLERS ───────────────────────────────────────────────────────────
+async function sbRep(){
+  const n=$("rn")?.value,p=$("rp")?.value,m=$("rm")?.value,rt=$("rrt")?.value;
+  if(!n||!p||!m||!rt||m==="--Dooro--"||rt==="--Dooro--") return toast("❗ Buuxi goobaha muhiimka ah",true);
+  await fsAdd("repairs",{customerName:n,phone:p,model:m,repairType:rt,password:$("rpw")?.value||"",imei:$("ri")?.value||"",color:$("rc")?.value||"",isChecking:$("rck")?.checked||false,price:num($("rpr")?.value),notes:$("rnt")?.value||"",status:$("rst")?.value||"Sugaya",payStatus:"La'aanta",receivedBy:S.user.name,receivedDate:tod(),doneDate:"",givenBy:"",givenDate:"",payments:[]});
+  cM();await loadAll();toast("✅ Farasmo la diiwaan geliyey!");
+}
+async function sbItem(){
+  const n=$("in")?.value,co=num($("ico")?.value),se=num($("ise")?.value),q=num($("iq")?.value);
+  if(!n||!co||!se||!q) return toast("❗ Buuxi goobaha muhiimka ah",true);
+  if(se<=co) return toast("❗ Qiimaha iibku waa inuu sarreeyo costka",true);
+  await fsAdd("inv",{name:n,category:$("ic")?.value,costPrice:co,sellPrice:se,qty:q,supplierName:$("isu")?.value||"",addedBy:S.user.name,date:tod()});
+  cM();await loadAll();toast("✅ Badeeco la diiwaan geliyey!");
+}
+async function sbIph(){
+  const m=$("ipm")?.value,co=num($("ipco")?.value),se=num($("ipse")?.value);
+  if(!m||m==="--Dooro--"||!co||!se) return toast("❗ Buuxi goobaha muhiimka ah",true);
+  await fsAdd("iphones",{model:m,storage:$("ips")?.value||"",color:$("ipc")?.value||"",imei:$("ipi")?.value||"",costPrice:co,sellPrice:se,condition:$("ipcd")?.value||"Cusub",supplierName:$("ipsu")?.value||"",status:"Jira",addedBy:S.user.name,date:tod()});
+  cM();await loadAll();toast("✅ iPhone stock la diiwaan geliyey!");
+}
+async function sbSale(){
+  const cn=$("scn")?.value||"Macmiil",cp=$("scp")?.value||"",da=num($("sda")?.value);
+  if(_sT==="item"){
+    const iid=$("sii")?.value,it=S.inv.find(i=>i._id===iid),q=num($("sq")?.value||1);
     if(!it) return toast("❗ Dooro badeecad",true);
-    if(qty<1||qty>num(it.qty)) return toast("❗ Tiro khaldan",true);
-    const tc=num(it.costPrice)*qty, tp=num(it.sellPrice)*qty;
-    const deyn=salePay==="deyn"?deynAmt:0, paid=tp-deyn;
-    await aDoc("sales",{saleType:"item",itemName:it.name,category:it.category,qty,totalCost:tc,totalPrice:tp,paid,deyn,custName:cust,custPhone:cph,payType:salePay,soldBy:S.user.name,date:td()});
-    await uDoc("inventory",itemId,{qty:num(it.qty)-qty});
-    if(salePay==="deyn"&&deyn>0) await aDoc("debts",{custName:cust,phone:cph,item:it.name,totalAmount:tp,paidAmount:paid,notes:"Iibka",date:td(),addedBy:S.user.name,payments:[]});
+    if(q<1||q>num(it.qty)) return toast("❗ Tiro khaldan",true);
+    const tc=num(it.costPrice)*q,tp=num(it.sellPrice)*q,deyn=_sP==="deyn"?da:0,paid=tp-deyn;
+    await fsAdd("sales",{saleType:"item",itemName:it.name,category:it.category,qty:q,totalCost:tc,totalPrice:tp,paid,deyn,custName:cn,custPhone:cp,payType:_sP,soldBy:S.user.name,date:tod()});
+    await fsUpdate("inv",iid,{qty:num(it.qty)-q});
+    if(_sP==="deyn"&&deyn>0) await fsAdd("debts",{custName:cn,phone:cp,item:it.name,totalAmount:tp,paidAmount:paid,notes:"Iibka",date:tod(),addedBy:S.user.name,payments:[]});
   } else {
-    const ipId=$("s-ipId")?.value, ip=S.iphones.find(i=>i._id===ipId);
+    const ipid=$("sip")?.value,ip=S.iphones.find(i=>i._id===ipid);
     if(!ip) return toast("❗ Dooro iPhone",true);
-    const deyn=salePay==="deyn"?deynAmt:0, paid=num(ip.sellPrice)-deyn;
+    const deyn=_sP==="deyn"?da:0,paid=num(ip.sellPrice)-deyn;
     const nm=`${ip.model} ${ip.storage||""} ${ip.color||""}`.trim();
-    await aDoc("sales",{saleType:"iphone",itemName:nm,category:"📱 iPhone Celis",qty:1,totalCost:num(ip.costPrice),totalPrice:num(ip.sellPrice),paid,deyn,custName:cust,custPhone:cph,payType:salePay,soldBy:S.user.name,date:td()});
-    await uDoc("iphones",ipId,{status:"La Gadaa",soldDate:td(),soldBy:S.user.name,soldTo:cust});
-    if(salePay==="deyn"&&deyn>0) await aDoc("debts",{custName:cust,phone:cph,item:nm,totalAmount:num(ip.sellPrice),paidAmount:paid,notes:"iPhone Iib",date:td(),addedBy:S.user.name,payments:[]});
+    await fsAdd("sales",{saleType:"iphone",itemName:nm,category:"📱 iPhone Celis",qty:1,totalCost:num(ip.costPrice),totalPrice:num(ip.sellPrice),paid,deyn,custName:cn,custPhone:cp,payType:_sP,soldBy:S.user.name,date:tod()});
+    await fsUpdate("iphones",ipid,{status:"La Gadaa",soldDate:tod(),soldBy:S.user.name,soldTo:cn});
+    if(_sP==="deyn"&&deyn>0) await fsAdd("debts",{custName:cn,phone:cp,item:nm,totalAmount:num(ip.sellPrice),paidAmount:paid,notes:"iPhone Iib",date:tod(),addedBy:S.user.name,payments:[]});
   }
-  closeModal();toast("✅ Iibka la diiwaan geliyey!");
-};
-
-window.submitDebt=async()=>{
-  const name=$("d-name")?.value, item=$("d-item")?.value, tot=num($("d-tot")?.value);
-  if(!name||!item||!tot) return toast("❗ Buuxi goobaha muhiimka ah",true);
-  await aDoc("debts",{custName:name,phone:$("d-phone")?.value||"",item,totalAmount:tot,paidAmount:num($("d-paid")?.value||0),notes:$("d-note")?.value||"",date:td(),addedBy:S.user.name,payments:[]});
-  closeModal();toast("✅ Deynta la diiwaan geliyey!");
-};
-
-window.submitSupplier=async()=>{
-  const co=$("sp-co")?.value, item=$("sp-item")?.value, qty=num($("sp-qty")?.value), uc=num($("sp-unit")?.value);
-  if(!co||!item||!qty||!uc) return toast("❗ Buuxi goobaha muhiimka ah",true);
-  const total=qty*uc;
-  let paidNow=0;
-  if(spPayType==="kaash") paidNow=total;
-  else if(spPayType==="qayb") paidNow=num($("sp-paid-now")?.value);
-  const initPayments=paidNow>0?[{amount:paidNow,note:"Hordhac",date:td(),by:S.user.name}]:[];
-  await aDoc("suppliers",{companyName:co,contactName:$("sp-cnt")?.value||"",phone:$("sp-ph")?.value||"",itemDesc:item,category:$("sp-cat")?.value,qty,unitCost:uc,totalAmount:total,buyType:spPayType,notes:$("sp-note")?.value||"",date:td(),addedBy:S.user.name,payments:initPayments});
-  closeModal();toast("✅ Supplier la diiwaan geliyey!");
-};
-
-// ── DETAIL VIEWS ──────────────────────────────────────────────────────────────
-function drawDetail(d){
-  if(d.type==="repair") return detailRepair(d.id);
-  if(d.type==="debt") return detailDebt(d.id);
-  if(d.type==="sup") return detailSupplier(d.id);
-  return "";
+  cM();await loadAll();toast("✅ Iibka la diiwaan geliyey!");
+}
+async function sbDebt(){
+  const n=$("dn")?.value,i=$("di")?.value,t=num($("dt")?.value);
+  if(!n||!i||!t) return toast("❗ Buuxi goobaha muhiimka ah",true);
+  await fsAdd("debts",{custName:n,phone:$("dp")?.value||"",item:i,totalAmount:t,paidAmount:num($("dpa")?.value||0),notes:"",date:tod(),addedBy:S.user.name,payments:[]});
+  cM();await loadAll();toast("✅ Deynta la diiwaan geliyey!");
+}
+async function sbSup(){
+  const co=$("spco")?.value,it=$("spit")?.value,q=num($("spq")?.value),u=num($("spu")?.value);
+  if(!co||!it||!q||!u) return toast("❗ Buuxi goobaha muhiimka ah",true);
+  const tot=q*u;
+  let pn=0;
+  if(_spP==="kaash") pn=tot;
+  else if(_spP==="qayb") pn=num($("sppn")?.value);
+  const initP=pn>0?[{amount:pn,note:"Hordhac",date:tod(),by:S.user.name}]:[];
+  await fsAdd("sups",{companyName:co,contactName:$("spcn")?.value||"",phone:$("spph")?.value||"",itemDesc:it,category:$("spca")?.value,qty:q,unitCost:u,totalAmount:tot,buyType:_spP,notes:$("spnt")?.value||"",date:tod(),addedBy:S.user.name,payments:initP});
+  cM();await loadAll();toast("✅ Supplier la diiwaan geliyey!");
+}
+function sbChPin(){
+  const c=$("cpc")?.value,n=$("cpn")?.value,x=$("cpx")?.value;
+  if(!c||!n||!x) return toast("❗ Buuxi dhammaan goobaha",true);
+  if(c!==S.user.pin) return toast("❗ PIN-ka hadda jira waa khaldan yahay",true);
+  if(n.length<4) return toast("❗ PIN-ku waa inuu ahaadaa 4 tiro",true);
+  if(n!==x) return toast("❗ PIN-yada cusub kuma heshiiyaan",true);
+  const u=USERS.find(x=>x.id===S.user.id);
+  if(u){u.pin=n;S.user.pin=n;}
+  cM();toast("✅ PIN-ka waa la beddelay!");
+}
+function sbRstPin(){
+  const uid=$("rpu")?.value,n=$("rpn")?.value,x=$("rpx")?.value;
+  if(!uid||!n||!x) return toast("❗ Buuxi dhammaan goobaha",true);
+  if(n.length<4) return toast("❗ PIN-ku waa inuu ahaadaa 4 tiro",true);
+  if(n!==x) return toast("❗ PIN-yada cusub kuma heshiiyaan",true);
+  const u=USERS.find(u=>u.id===uid);
+  if(u){u.pin=n;}
+  cM();toast("✅ PIN-ka "+(u?.name||"")+" waa la beddelay!");
 }
 
-function detailRepair(id){
-  const r=S.repairs.find(x=>x._id===id); if(!r)return "";
-  const paid=sumP(r.payments);
-  return mWrap("📋 Farasmo Faahfaahin",`
-    <div class="det-grid">
+// ── DETAIL VIEWS ──────────────────────────────────────────────────────────────
+function dWrap(d){
+  if(d.type==="repair") return detR(d.id);
+  if(d.type==="debt")   return detD(d.id);
+  if(d.type==="sup")    return detS(d.id);
+  return "";
+}
+function mkOv(title,content){
+  return`<div class="ov" onclick="if(event.target===this)cD()">
+    <div class="modal"><div class="mh"><span class="mt">${title}</span><button class="xbtn" onclick="cD()">✕</button></div>
+    <div class="mb">${content}</div></div>
+  </div>`;
+}
+function dr(l,v,c=""){return`<div class="dr"><span class="dl">${l}</span><span class="dv" style="color:${c||"#f1f5f9"}">${v||"—"}</span></div>`;}
+function pyH(payments,total){
+  const pd=sumP(payments);
+  return`<div style="margin-top:10px">
+    <div class="lbl">Taariikhda Lacag Bixinta</div>
+    ${payments.map(p=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #1a1a1a;flex-wrap:wrap;gap:3px"><span style="color:#64748b">📅 ${p.date||tod()} 👤 ${p.by||"?"}</span><span style="color:#4ade80;font-weight:700">${fmt(p.amount)}</span>${p.note?`<span style="color:#475569;font-size:10px;width:100%">(${p.note})</span>`:""}</div>`).join("")}
+    <div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:700;font-size:13px"><span style="color:#94a3b8">La Bixiyay:</span><span style="color:#22d3ee">${fmt(pd)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px"><span style="color:#94a3b8">Dhiman:</span><span style="color:${pd>=num(total)?"#4ade80":"#f472b6"}">${fmt(Math.max(0,num(total)-pd))}</span></div>
+  </div>`;
+}
+
+function detR(id){
+  const r=S.repairs.find(x=>x._id===id); if(!r) return "";
+  const pd=sumP(r.payments);
+  return mkOv("📋 Farasmo Faahfaahin",`
+    <div class="dg">
       ${dr("Macmiilka",r.customerName)}${dr("Telefoon",r.phone)}${dr("Model",r.model)}
       ${r.color?dr("Midab",r.color):""}${r.imei?dr("IMEI",r.imei):""}
       ${dr("Dhibaatada",r.repairType)}${r.password?dr("Password",r.password):""}
@@ -647,116 +718,109 @@ function detailRepair(id){
       ${r.givenBy?dr("Siiyay",r.givenBy):""}${r.givenDate?dr("Taariikhda Qaatay",r.givenDate):""}
       ${r.notes?dr("Faallo",r.notes):""}
     </div>
-    ${r.status!=="Dhammaatay"?`<div style="margin-top:8px"><div class="lbl">Cusboonaysii Xaaladda</div><div class="st-btns">
-      <button class="st-btn" style="background:#92400e" onclick="updRS('${r._id}','Socota')">🔧 Socota</button>
-      <button class="st-btn" style="background:#065f46" onclick="updRS('${r._id}','Dhammaatay')">✅ Dhammaatay</button>
+    ${r.status!=="Dhammaatay"?`<div style="margin-top:8px"><div class="lbl">Cusboonaysii Xaaladda</div><div class="stbs">
+      <button class="stb" style="background:#92400e" onclick="updRS('${r._id}','Socota')">🔧 Socota</button>
+      <button class="stb" style="background:#065f46" onclick="updRS('${r._id}','Dhammaatay')">✅ Dhammaatay</button>
     </div></div>`:""}
     ${r.status==="Dhammaatay"&&!r.givenBy?`<div style="margin-top:8px"><div class="lbl">Cidda Mobilka Siisay</div>
-      <select class="inp" id="giv-sel"><option value="">--Dooro--</option>${USERS.map(u=>`<option value="${u.name}">${u.av} ${u.name}</option>`).join("")}</select>
-      <button class="full-btn" style="background:#1d4ed8;color:#fff;margin-top:6px" onclick="setGiver('${r._id}')">✅ Xaqiiji</button>
-    </div>`:""}
-    ${!r.isChecking&&r.payStatus==="La'aanta"?`<button class="full-btn" style="background:#065f46;color:#fff;margin-top:8px" onclick="markPaid('${r._id}')">💰 Lacagta Waa La Suubiyay (Full)</button>
-    <div class="pay-box" style="margin-top:10px">
-      <div class="lbl">💳 Dejin Lacag (Qayb)</div>
-      <div class="g2">${fld("Qadarka ($)","rp-amt","50","number")}${fld("Faallo","rp-note","...")}</div>
-      <button class="full-btn" style="background:#1d4ed8;color:#fff;margin-top:4px" onclick="addRPay('${r._id}')">➕ Ku Dar</button>
-    </div>`:""}
-    ${paid>0?payHistory(r.payments,r.price):""}
+      <select class="inp" id="gvs"><option value="">--Dooro--</option>${USERS.map(u=>`<option value="${u.name}">${u.av} ${u.name}</option>`).join("")}</select>
+      <button class="fbtn" style="background:#1d4ed8;color:#fff;margin-top:6px" onclick="setGv('${r._id}')">✅ Xaqiiji</button></div>`:""}
+    ${!r.isChecking&&r.payStatus==="La'aanta"?`
+      <button class="fbtn" style="background:#065f46;color:#fff;margin-top:8px" onclick="mkPd('${r._id}')">💰 Lacagta Waa La Suubiyay (Full)</button>
+      <div class="pybox" style="margin-top:10px">
+        <div class="lbl">💳 Dejin Lacag (Qayb)</div>
+        <div class="g2">${F("Qadarka ($)","rpa","50","number")}${F("Faallo","rpn","...")}</div>
+        <button class="fbtn" style="background:#1d4ed8;color:#fff;margin-top:4px" onclick="addRP('${r._id}')">➕ Ku Dar</button>
+      </div>`:""}
+    ${pd>0?pyH(r.payments,r.price):""}
   `);
 }
 
-function detailDebt(id){
-  const d=S.debts.find(x=>x._id===id); if(!d)return "";
-  const rem=Math.max(0,num(d.totalAmount)-num(d.paidAmount));
-  return mWrap("🤝 Macmiil Deyn",`
-    <div class="det-grid">
+function detD(id){
+  const d=S.debts.find(x=>x._id===id); if(!d) return "";
+  const rm=Math.max(0,num(d.totalAmount)-num(d.paidAmount));
+  return mkOv("🤝 Macmiil Deyn",`
+    <div class="dg">
       ${dr("Macmiilka",d.custName)}${d.phone?dr("Telefoon",d.phone):""}
       ${dr("Alaabta",d.item)}${dr("Deynta",fmt(d.totalAmount),"#f472b6")}
       ${dr("La Bixiyay",fmt(d.paidAmount),"#4ade80")}
-      ${dr("Dhiman",fmt(rem),rem>0?"#ef4444":"#4ade80")}
-      ${dr("Taariikhda",d.date)}
+      ${dr("Dhiman",fmt(rm),rm>0?"#ef4444":"#4ade80")}${dr("Taariikhda",d.date)}
     </div>
-    <div class="pay-box" style="margin-top:10px">
+    <div class="pybox" style="margin-top:10px">
       <div class="lbl">💳 Ku Dar Lacag Bixin</div>
-      <div class="g2">${fld("Qadarka ($)","dp-amt","50","number")}${fld("Faallo","dp-note","...")}</div>
-      <button class="full-btn" style="background:#be185d;color:#fff;margin-top:4px" onclick="addDPay('${d._id}')">➕ Ku Dar</button>
+      <div class="g2">${F("Qadarka ($)","dpa","50","number")}${F("Faallo","dpn","...")}</div>
+      <button class="fbtn" style="background:#be185d;color:#fff;margin-top:4px" onclick="addDP('${d._id}')">➕ Ku Dar</button>
     </div>
-    ${sumP(d.payments)>0?payHistory(d.payments,d.totalAmount):""}
+    ${sumP(d.payments)>0?pyH(d.payments,d.totalAmount):""}
   `);
 }
 
-function detailSupplier(id){
-  const s=S.suppliers.find(x=>x._id===id); if(!s)return "";
-  const tc=num(s.totalAmount), pd=sumP(s.payments), rm=Math.max(0,tc-pd);
-  const pct=tc>0?Math.min(100,Math.round(pd/tc*100)):100;
-  return mWrap("🏪 Supplier Faahfaahin",`
-    <div class="det-grid">
-      ${dr("Shirkadda",s.companyName)}
-      ${s.contactName?dr("Xiriiriyaha",s.contactName):""}${s.phone?dr("Telefoon",s.phone):""}
-      ${dr("Alaabta",s.itemDesc)}${dr("Tirada",`${s.qty} qaybood`)}
-      ${dr("Cost/Qaybood",fmt(s.unitCost),"#94a3b8")}
-      ${dr("Wadarta",fmt(tc),"#fbbf24")}
+function detS(id){
+  const s=S.sups.find(x=>x._id===id); if(!s) return "";
+  const tc=num(s.totalAmount),pd=sumP(s.payments),rm=Math.max(0,tc-pd),pct=tc>0?Math.min(100,Math.round(pd/tc*100)):100;
+  return mkOv("🏪 Supplier Faahfaahin",`
+    <div class="dg">
+      ${dr("Shirkadda",s.companyName)}${s.contactName?dr("Xiriiriyaha",s.contactName):""}${s.phone?dr("Telefoon",s.phone):""}
+      ${dr("Alaabta",s.itemDesc)}${dr("Tirada",s.qty+" qaybood")}
+      ${dr("Cost/Qaybood",fmt(s.unitCost),"#94a3b8")}${dr("Wadarta",fmt(tc),"#fbbf24")}
       ${dr("Nooca Bixin",s.buyType==="kaash"?"💵 Kaash Buuxa":s.buyType==="qayb"?"💳 Qayb+Deyn":"📋 Deyn Buuxa",s.buyType==="kaash"?"#10b981":"#fb923c")}
-      ${dr("La Bixiyay",fmt(pd),"#4ade80")}
-      ${dr("Dhiman",fmt(rm),rm>0?"#fb923c":"#4ade80")}
+      ${dr("La Bixiyay",fmt(pd),"#4ade80")}${dr("Dhiman",fmt(rm),rm>0?"#fb923c":"#4ade80")}
       ${dr("Taariikhda",s.date)}
     </div>
     ${s.buyType!=="kaash"&&rm>0?`
-    <div style="margin:10px 0">
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:4px"><span>La bixiyay</span><span>${pct}%</span></div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-    </div>`:""}
-    ${s.buyType!=="kaash"&&rm>0?`
-    <div class="pay-box" style="margin-top:10px">
+    <div style="margin:8px 0">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:3px"><span>La bixiyay</span><span>${pct}%</span></div>
+      <div class="pgbar"><div class="pgfil" style="width:${pct}%"></div></div>
+    </div>
+    <div class="pybox">
       <div class="lbl">💳 Ku Dar Lacag Bixin (Hadba Meesha Aad Joogto)</div>
-      <div class="g2">${fld("Qadarka ($)","sp-p-amt","Hadba waad geli kartaa","number")}${fld("Taariikhda","sp-p-date",td(),"text",td())}</div>
-      ${fld("Faallo (ikhtiyaari)","sp-p-note","Tusaale: maalin dambe bixiyay...")}
-      <button class="full-btn" style="background:#0e7490;color:#fff;margin-top:4px" onclick="addSPay('${s._id}')">➕ Ku Dar Lacagta</button>
+      <div class="g2">${F("Qadarka ($)","sppa","Hadba waad geli kartaa","number")}${F("Taariikhda","sppd",tod(),"text",tod())}</div>
+      ${F("Faallo","sppn","Tusaale: maalin dambe...")}
+      <button class="fbtn" style="background:#0e7490;color:#fff;margin-top:4px" onclick="addSP('${s._id}')">➕ Ku Dar Lacagta</button>
     </div>`:""}
     ${rm<=0&&s.buyType!=="kaash"?`<div class="hint" style="margin-top:10px;text-align:center">✅ Wadarta lacagta waa la bixiyay!</div>`:""}
-    ${pd>0?payHistory(s.payments,tc):""}
+    ${pd>0?pyH(s.payments,tc):""}
   `);
 }
 
-function dr(l,v,c=""){return`<div class="dr-row"><span class="dr-l">${l}</span><span class="dr-v" style="color:${c||"#f1f5f9"}">${v||"—"}</span></div>`;}
-function payHistory(payments,total){
-  const paid=sumP(payments);
-  return`<div class="pay-hist" style="margin-top:10px">
-    <div class="lbl">Taariikhda Lacag Bixinta</div>
-    ${payments.map((p,i)=>`<div class="pay-hist-row"><span style="color:#64748b">📅 ${p.date||td()} 👤 ${p.by||"?"}</span><span style="color:#4ade80;font-weight:700">${fmt(p.amount)}</span>${p.note?`<span style="color:#475569;font-size:10px;width:100%">(${p.note})</span>`:""}</div>`).join("")}
-    <div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:700;font-size:13px"><span style="color:#94a3b8">Wadarta La Bixiyay:</span><span style="color:#22d3ee">${fmt(paid)}</span></div>
-    <div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px"><span style="color:#94a3b8">Dhiman:</span><span style="color:${paid>=num(total)?"#4ade80":"#f472b6"}">${fmt(Math.max(0,num(total)-paid))}</span></div>
-  </div>`;
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+async function updRS(id,st){
+  await fsUpdate("repairs",id,{status:st,doneDate:st==="Dhammaatay"?tod():""});
+  await loadAll();toast("✅ Xaaladda la cusboonaysiiyey");
+}
+async function setGv(id){
+  const v=$("gvs")?.value; if(!v)return;
+  await fsUpdate("repairs",id,{givenBy:v,givenDate:tod()});
+  await loadAll();toast("✅ La xaqiijiyey");
+}
+async function mkPd(id){
+  await fsUpdate("repairs",id,{payStatus:"Suubiyay"});
+  await loadAll();toast("✅ Lacagta la suubiyay");
+}
+async function addRP(id){
+  const a=num($("rpa")?.value),n=$("rpn")?.value||"";
+  if(!a) return toast("❗ Geli qadarka",true);
+  const r=S.repairs.find(x=>x._id===id);
+  await fsUpdate("repairs",id,{payments:[...(r?.payments||[]),{amount:a,note:n,date:tod(),by:S.user.name}]});
+  await loadAll();toast("✅ Dejin la diiwaan geliyey");
+}
+async function addDP(id){
+  const a=num($("dpa")?.value),n=$("dpn")?.value||"";
+  if(!a) return toast("❗ Geli qadarka",true);
+  const d=S.debts.find(x=>x._id===id);
+  await fsUpdate("debts",id,{paidAmount:num(d.paidAmount)+a,payments:[...(d?.payments||[]),{amount:a,note:n,date:tod(),by:S.user.name}]});
+  await loadAll();toast("✅ Lacag bixin la diiwaan geliyey");
+}
+async function addSP(id){
+  const a=num($("sppa")?.value),dt=$("sppd")?.value||tod(),n=$("sppn")?.value||"";
+  if(!a) return toast("❗ Geli qadarka",true);
+  const s=S.sups.find(x=>x._id===id);
+  await fsUpdate("sups",id,{payments:[...(s?.payments||[]),{amount:a,note:n,date:dt,by:S.user.name}]});
+  await loadAll();toast("✅ Lacag bixin la diiwaan geliyey!");
 }
 
-// Action handlers
-window.updRS=async(id,status)=>{await uDoc("repairs",id,{status,doneDate:status==="Dhammaatay"?td():""});toast("✅ Xaaladda la cusboonaysiiyey");};
-window.setGiver=async id=>{const v=$("giv-sel")?.value;if(!v)return;await uDoc("repairs",id,{givenBy:v,givenDate:td()});toast("✅ La xaqiijiyey");};
-window.markPaid=async id=>{await uDoc("repairs",id,{payStatus:"Suubiyay"});toast("✅ Lacagta la suubiyay");};
-window.addRPay=async id=>{
-  const amt=num($("rp-amt")?.value), note=$("rp-note")?.value||"";
-  if(!amt)return toast("❗ Geli qadarka",true);
-  const r=S.repairs.find(x=>x._id===id);
-  await uDoc("repairs",id,{payments:[...(r?.payments||[]),{amount:amt,note,date:td(),by:S.user.name}]});
-  toast("✅ Dejin la diiwaan geliyey");
-};
-window.addDPay=async id=>{
-  const amt=num($("dp-amt")?.value), note=$("dp-note")?.value||"";
-  if(!amt)return toast("❗ Geli qadarka",true);
-  const d=S.debts.find(x=>x._id===id);
-  await uDoc("debts",id,{paidAmount:num(d.paidAmount)+amt,payments:[...(d?.payments||[]),{amount:amt,note,date:td(),by:S.user.name}]});
-  toast("✅ Lacag bixin la diiwaan geliyey");
-};
-window.addSPay=async id=>{
-  const amt=num($("sp-p-amt")?.value), note=$("sp-p-note")?.value||"", date=$("sp-p-date")?.value||td();
-  if(!amt)return toast("❗ Geli qadarka",true);
-  const s=S.suppliers.find(x=>x._id===id);
-  const payments=[...(s?.payments||[]),{amount:amt,note,date,by:S.user.name}];
-  await uDoc("suppliers",id,{payments});
-  toast("✅ Lacag bixin la diiwaan geliyey!");
-};
-
-function empty(msg){return`<div class="empty"><span style="font-size:28px">📂</span>${msg}</div>`;}
+// ── START ─────────────────────────────────────────────────────────────────────
+loadAll();
 </script>
 </body>
 </html>
